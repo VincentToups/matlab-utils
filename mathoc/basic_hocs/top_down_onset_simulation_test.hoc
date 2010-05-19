@@ -1,0 +1,126 @@
+tstop = 1000
+load_file("noload.hoc")
+xopen("./basic_hocs/simplified_anatomy.hoc")
+//xopen("./basic_hocs/gui.hoc")
+xopen("./basic_hocs/utilities.hoc")
+xopen("./basic_hocs/pattern_template.hoc")
+xopen("./basic_hocs/syn_type_keeper.hoc")
+xopen("./basic_hocs/oscillation_template.hoc")
+xopen("./basic_hocs/savers.hoc")
+
+objref apsynsE
+objref apsynsI
+objref bassynsE 
+objref bassynsE_background
+objref bassynsI
+
+xopen("./basic_hocs/DistFromSomaLambda.hoc")
+
+// Time
+tstop = 600
+
+
+// Default values for simulation
+g_e = 4e-3
+g_i = 5e-4
+e_e = 0
+e_i = -75
+tau_e = 3
+tau_i = 11
+efficiency_factor = 10
+ne_ap = 2000
+ni_ap = 1000
+ne_bas = 2000
+ni_bas = 1000
+rate_e_ap = 1
+rate_i_ap = 5
+rate_e_bas = 1
+rate_i_bas = 5
+nrepeat = 5
+strdef trace_file
+strdef spike_file
+strdef do_instead 
+do_instead = ""
+master_seed = 0
+apsynsE_osc_amp = 0
+apsynsE_osc_freq = 40
+apsynsI_osc_amp = 0
+apsynsI_osc_freq = 10
+bassynsE_osc_freq = 10
+bassynsE_osc_amp = .1
+bassynsI_osc_freq = 40
+bassynsI_osc_amp = .1
+
+trace_file = "./data/top_down_onset_simulation_test.trace"
+spike_file = "./data/top_down_onset_simulation_test.spikes"
+
+strdef soma_voltage_trace_fn, basilar1_voltage_trace_fn,basilar2_voltage_trace_fn,basilar3_voltage_trace_fn, apical_voltage_trace_fn
+soma_voltage_trace_fn = "./data/soma_voltage_trace_fn.trace"
+basilar1_voltage_trace_fn = "./data/basilar1_voltage_trace_fn.trace"
+basilar2_voltage_trace_fn = "./data/basilar2_voltage_trace_fn.trace"
+basilar3_voltage_trace_fn = "./data/basilar3_voltage_trace_fn.trace"
+apical_voltage_trace_fn = "./data/apical_voltage_trace_fn.trace"
+
+//print "Doing parameter file"
+xopen(parameter_file)
+//printf("g_e is now %f\n", g_e)
+xopen("./basic_hocs/setup_3pt_voltage_trace_savers.hoc")
+printf("do instead is %s\n", do_instead)
+
+objref masterRandom
+masterRandom = new Random(master_seed)
+
+apsynsE = new SynTypeKeeper()
+apsynsE.distribute_synapses_in_sections_prob(ne_ap/efficiency_factor, apicals, tau_e,e_e,g_e,new DistFromSomaLambda(apicalref.sec.L, apicalref.sec.L/30),masterRandom.normal(0,10000))
+
+apsynsI = new SynTypeKeeper()
+apsynsI.distribute_synapses_in_sections_prob(ne_ap/efficiency_factor, apicals, tau_i,e_i,g_i,new DistFromSomaLambda(apicalref.sec.L, apicalref.sec.L/30),masterRandom.normal(0,10000))
+
+bassynsE = new SynTypeKeeper()
+bassynsE.distribute_synapses_in_sections_prob(ne_bas/efficiency_factor,soma_and_basilars, tau_e,e_e,g_e,new DistFromSomaLambda(0,600),masterRandom.normal(0,10000))
+
+bassynsE_background = new SynTypeKeeper()
+bassynsE_background.distribute_synapses_in_sections_prob(ne_bas/efficiency_factor,soma_and_basilars, tau_e,e_e,g_e,new DistFromSomaLambda(0,600),masterRandom.normal(0,10000))
+
+bassynsI = new SynTypeKeeper()
+bassynsI.distribute_synapses_in_sections_prob(ni_bas/efficiency_factor,soma_and_basilars,tau_i,e_i,g_i,new DistFromSomaLambda(0,30),masterRandom.normal(0,10000))
+
+// Patterns
+// Use oscillating patterns with zero amplitude
+
+objref apsynsE_times
+apsynsE_times = new OscillationTemplate("ratehz",rate_e_ap*efficiency_factor,"freqhz",apsynsE_osc_freq,"amp",apsynsE_osc_amp,"tstop",tstop)
+apsynsE.set_spike_template(apsynsE_times)
+
+objref apsynsI_times
+apsynsI_times = new OscillationTemplate("ratehz",rate_i_ap*efficiency_factor,"freqhz",apsynsI_osc_freq,"amp",apsynsI_osc_amp,"tstop",tstop)
+apsynsI.set_spike_template(apsynsI_times)
+
+objref bassynsE_times
+bassynsE_times = new PatternTemplate(1,"times", 10000, "stds", 5, "relis", .5)
+bassynsE.set_spike_template(bassynsE_times)
+
+objref bassynsI_times
+bassynsI_times = new OscillationTemplate("ratehz",rate_i_bas*efficiency_factor,"freqhz",bassynsI_osc_freq,"amp",bassynsI_osc_amp,"tstop",tstop)
+bassynsI.set_spike_template(bassynsI_times)
+
+xopen("./basic_hocs/SynResetPreSim.hoc")
+objref synapse_resetter
+synapse_resetter = new SynResetPreSim(1010)
+
+objref vtsaver
+vtsaver = new VoltageTraceSaver("a",0,.5,sections,trace_file)
+
+objref stsaver
+stsaver = new SpikeTrainSaver("a",0,.5,sections,spike_file)
+
+// F-F vary excitation rate
+for(repeat_i=0;repeat_i<nrepeat;repeat_i=repeat_i+1){
+	printf("Do presim")
+	preSim()
+	printf("Done prep\n")
+	run()
+	printf("Done sim\n")
+	save()
+	postSim()
+}

@@ -1,0 +1,3 @@
+xopen("load_pyr3.hoc")
+
+forsec pyr3inst.comp { print diam }

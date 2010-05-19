@@ -1,0 +1,114 @@
+xopen("./basic_hocs/simplified_anatomy.hoc")
+xopen("./basic_hocs/gui.hoc")
+xopen("./basic_hocs/utilities.hoc")
+xopen("./basic_hocs/pattern_template.hoc")
+xopen("./basic_hocs/syn_type_keeper.hoc")
+xopen("./basic_hocs/oscillation_template.hoc")
+xopen("./basic_hocs/shape_template.hoc")
+xopen("./basic_hocs/savers.hoc")
+
+objref apsynsE
+objref bassynsE 
+objref bassynsI
+
+xopen("./basic_hocs/DistFromSomaLambda.hoc")
+
+// Time
+tstop = 1000
+
+// Place Synapses
+g_e = 0.00625
+g_i = 0.001
+e_e = 0
+e_i = -75
+e_tau = 3
+i_tau = 11
+efficiency_factor = 10
+ne_ap = 2000
+ne_bas = 2000
+ni_bas = 1000
+rate_e_ap = 1
+rate_e_bas = 1
+rate_i_bas = 5
+nrepeat = 10
+strdef trace_file
+strdef spike_file
+
+trace_file = "./data/simple_background.trace"
+spike_file = "./data/simple_background.spikes"
+
+apsynsE = new SynTypeKeeper()
+apsynsE.distribute_synapses_in_sections_prob(ne_ap/efficiency_factor, apicals, e_tau,e_e,g_e,new DistFromSomaLambda(apicalref.sec.L, apicalref.sec.L/30),1010)
+
+bassynsE = new SynTypeKeeper()
+bassynsE.distribute_synapses_in_sections_prob(ne_bas/efficiency_factor,soma_and_basilars, e_tau,e_e,g_e,new DistFromSomaLambda(0,600),10100)
+
+bassynsI = new SynTypeKeeper()
+bassynsI.distribute_synapses_in_sections_prob(ni_bas/efficiency_factor,soma_and_basilars,i_tau,e_i,g_i,new DistFromSomaLambda(0,30),10100)
+
+// Patterns
+// Use oscillating patterns with zero amplitude
+
+objref apsynsE_times
+apsynsE_times = new OscillationTemplate("ratehz",rate_e_ap*efficiency_factor,"amp",0,"tstop",tstop)
+apsynsE.set_spike_template(apsynsE_times)
+
+objref bassynsE_times
+bassynsE_times = new OscillationTemplate("ratehz",rate_e_bas*efficiency_factor,"amp",0,"tstop",tstop)
+bassynsE.set_spike_template(bassynsE_times)
+
+objref bassynsI_times
+bassynsI_times = new OscillationTemplate("ratehz",rate_i_bas*efficiency_factor,"amp",0,"tstop",tstop)
+bassynsI.set_spike_template(bassynsI_times)
+
+xopen("./basic_hocs/SynResetPreSim.hoc")
+objref synapse_resetter
+synapse_resetter = new SynResetPreSim(1010)
+
+objref vtsaver
+vtsaver = new VoltageTraceSaver("a",0,.5,sections,trace_file)
+
+objref stsaver
+stsaver = new SpikeTrainSaver("a",0,.5,sections,spike_file)
+
+// F-F vary excitation rate
+strdef tmp
+nrepeat = 10
+step_hz = 0
+erate_hz = 1
+nstep_hz = 1
+for(ei=0;ei<nstep_hz;ei=ei+1){
+	apsynsE_times.set_rate_hz(erate_hz)
+	bassynsE_times.set_rate_hz(erate_hz)
+	for(repeat_i=0;repeat_i<nrepeat;repeat_i=repeat_i+1){
+		printf("Do presim")
+		preSim()
+		printf("Done prep\n")
+		run()
+		printf("Done sim\n")
+		save()
+		postSim()
+	}
+	erate_hz = erate_hz + step_hz
+}
+
+// // F-F vary inhibitory rate
+// apsynsE_times.set_rate_hz(1)
+// bassynsE_times.set_rate_hz(1)
+// nrepeat = 10
+// step_hz = 1
+// erate_hz = 0.01
+// nstep_hz = 10
+// for(ei=0;ei<nstep_hz;ei=ei+1){
+// 	for(repeat_i=0;repeat_i<nrepeat;repeat_i=repeat_i+1){
+// 		bassynsI_times.set_rate_hz(erate_hz)
+// 		preSim()
+// 		printf("Done prep\n")
+// 		run()
+// 		printf("Done sim\n")
+// 		save()
+// 		postSim()
+// 		erate_hz = erate_hz + step_hz
+// 	}
+// }
+

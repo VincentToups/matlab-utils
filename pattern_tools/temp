@@ -1,0 +1,7 @@
+                            'CallBack', @dsevt_segnumcb );
+                            'CallBack', @dsevt_segnumdncb);
+                            'CallBack', @dsevt_segnumupcb);
+                            'CallBack', @dsevt_scluscb);
+                            'CallBack', @dsevt_sclusupcb );
+                            'CallBack', @dsevt_sclusdncb );
+set(ad.f, 'KeyDownFcn', @dsevt_kdfcn );

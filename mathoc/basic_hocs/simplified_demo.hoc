@@ -1,0 +1,93 @@
+xopen("./basic_hocs/simplified_anatomy.hoc")
+xopen("./basic_hocs/gui.hoc")
+xopen("./basic_hocs/utilities.hoc")
+xopen("./basic_hocs/pattern_template.hoc")
+xopen("./basic_hocs/syn_type_keeper.hoc")
+xopen("./basic_hocs/savers.hoc")
+
+objref apsyns 
+objref bassyns1 
+objref bassyns2
+
+apsyns = new SynTypeKeeper()
+//bassyns1 = new SynTypeKeeper()
+//bassyns2 = new SynTypeKeeper()
+
+begintemplate DistFromSomaP 
+public alpha, call, center, dist_from_soma
+objref secref
+external somaref
+external utils
+proc init(){
+	center = $1
+	alpha = $2
+	
+}
+func call(){ local pos, prob, val, dist
+	secref = $o1
+	pos = $2
+	dist =  utils.refdist(somaref,.5,secref,pos)
+	return exp( -(dist-center)^2/(alpha^2) )
+}
+
+func dist_from_soma(){ local pos, prob, val, dist
+	secref = $o1
+	pos = $2
+	return utils.refdist(somaref,.5,secref,pos)
+}
+
+endtemplate DistFromSomaP
+
+objref apfal, bassyns
+apfal = new DistFromSomaP(250,30)
+bassyns = new DistFromSomaP(30,30)
+
+objref aplist
+aplist = new List()
+utils.re_subsection(sections, "apical",aplist)
+
+apsyns.distribute_synapses_in_sections_prob(1000,aplist,3,0,.0089,apfal,1010)
+
+objref appat
+appat = new PatternTemplate(1,"times",150,"relis",1.1,"stds",8)
+
+apsyns.set_spike_template(appat)
+apsyns.set_spikes_from_template(1010)
+
+objref vtsaver
+vtsaver = new VoltageTraceSaver("a",0,.5,sections,"/tmp/demo_out.trace")
+saverList.append(vtsaver)
+
+begintemplate preSimmer
+public init, preSim, tempobj
+objref tempobj, random
+external __gSynTypeKeepers
+
+proc init(){
+	random = new Random(167544)
+}
+
+proc preSim() { local i,j,k,m,seed
+	print "preSimmer called"
+	m = __gSynTypeKeepers.count()
+	for(i=0;i<m;i=i+1){
+		print i
+		__gSynTypeKeepers.object(i).set_spikes_from_template(int(random.uniform(1,1000)))  
+		print "Reset all synapses"
+	} 
+}
+endtemplate preSimmer
+
+objref ps
+ps = new preSimmer()
+preSimList.append(ps)
+
+tstop = 200
+
+for(ei=0;ei<10;ei=ei+1){
+	preSim()
+	run()
+	save()
+	postSim()
+}
+

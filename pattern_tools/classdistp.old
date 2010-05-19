@@ -1,0 +1,31 @@
+function [d ub] = classdistp(ua,ub)
+% [D UB] = CLASSDISTP(UA,UB) when given two U matrices returns the 
+% percent difference between the two maximum likeli-hood clusterings
+% as D and also returns UB re-arranged so that its clusters are as
+% lined up with those of UA as well as possible.
+
+[nn,ca] = max(ua);
+[nn,cb] = max(ub);
+
+[d,s,s,s,jd] = classdist(ca,cb);
+[nn,ii] = max(jd);
+
+ii
+nn
+
+
+
+if size(ua,1) <= size(ub,1)
+    ub(1:length(ii),:) = ub(ii,:);
+else
+    ubaba = zeros(size(ua));
+    for i=1:length(ii)
+        ubaba(ii(i),:) = ub(i,:);
+    end
+    ub = ubaba;
+end
+
+[nn,cb] = max(ub);
+
+d = sum(cb==ca)/length(ca);
+

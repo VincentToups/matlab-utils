@@ -1,0 +1,41 @@
+objref dend_syns_exc_1,dend_syns_exc_2,dend_syns_exc_3,dend_syns_exc_4
+dend_syns_exc_1  = new SynTypeKeeper()
+dend_syns_exc_2  = new SynTypeKeeper()
+dend_syns_exc_3  = new SynTypeKeeper()
+dend_syns_exc_4  = new SynTypeKeeper()
+
+objref dend_syns_inh_1,dend_syns_inh_2,dend_syns_inh_3,dend_syns_inh_4
+dend_syns_inh_1  = new SynTypeKeeper()
+dend_syns_inh_2  = new SynTypeKeeper()
+dend_syns_inh_3  = new SynTypeKeeper()
+dend_syns_inh_4  = new SynTypeKeeper()
+
+objref soma_inh, soma_exc
+soma_inh = new SynTypeKeeper()
+soma_exc = new SynTypeKeeper()
+
+
+objref d1Sec, d2Sec, d3Sec, d4Sec, somaSec
+d1Sec = new List()
+d2Sec = new List()
+d3Sec = new List()
+d4Sec = new List()
+somaSec = new List()
+
+utils.re_subsection(Sections,"a1_",d1Sec)
+utils.re_subsection(Sections,"a2_",d2Sec)
+utils.re_subsection(Sections,"a3_",d3Sec)
+utils.re_subsection(Sections,"a4_",d4Sec)
+utils.re_subsection(Sections,"soma",somaSec)
+
+dend_syns_exc_1.distribute_synapses_in_sections(1000,d1Sec,3,0,.0089,1)
+dend_syns_exc_2.distribute_synapses_in_sections(1000,d2Sec,3,0,.0089,3)
+dend_syns_exc_3.distribute_synapses_in_sections(1000,d3Sec,3,0,.0089,5)
+dend_syns_exc_4.distribute_synapses_in_sections(1000,d4Sec,3,0,.0089,7)
+soma_exc.distribute_synapses_in_sections(1000,somaSec,3,0,.0089,11)
+
+dend_syns_inh_1.distribute_synapses_in_sections(150,d1Sec,11,-85,.0062,13)
+dend_syns_inh_2.distribute_synapses_in_sections(150,d2Sec,11,-85,.0062,17)
+dend_syns_inh_3.distribute_synapses_in_sections(150,d3Sec,11,-85,.0062,19)
+dend_syns_inh_4.distribute_synapses_in_sections(150,d4Sec,11,-85,.0062,23)
+soma_inh.distribute_synapses_in_sections(400,somaSec,11,-85,.0062,29)

@@ -1,0 +1,1308 @@
+:::::::::::::::
+:: analyze.m ::
+:::::::::::::::
+% PATTERN_TOOLS TEST SUITE
+% First we generate a surrogate data set.
+%
+% See the documentation of MTFAKE for details
+:::::::::::::::
+:: analyze.m ::
+:::::::::::::::
+:::::::::::
+:: b2h.m ::
+:::::::::::
+function y=b2h(x)
+:::::::::::
+:: b2h.m ::
+:::::::::::
+:::::::::::::::::
+:: cellequal.m ::
+:::::::::::::::::
+function bool = cellequal(c1,c2)
+% BOOL = CELLEQUAL(C1, C2) returns true if the two cell arrays are the same
+% under element wise comparision.  May call itself recursively or call
+% STRUCTEQUAL, which may cal CELLEQUAL.  All this can get rather involved,
+% so if there is a problem, this might be a place to look.
+:::::::::::::::::
+:: cellequal.m ::
+:::::::::::::::::
+:::::::::::::::::
+:: classdist.m ::
+:::::::::::::::::
+function [D, S, S1, S2, classprob]=classdist( class1, class2, tp)
+%[D, S, S1, S2, CLASSPROB] = CLASSDIST(CLASS1, CLASS2, TYPE)
+%   Returns the distance between two classifications CLASS1 and CLASS2 as
+%   the entropy of their joint distribution.  D is S divided by the max of
+%   S1 and S2.  S1 and S2 are the principles
+%   of the joint distribution CLASSPROB.  If TYPE is one, function expects
+%   U matrices, if TYPE is zero, function expects maximum likelyhood
+%   representations of the classes.  TYPE defaults to 0.  Either case gives
+:::::::::::::::::
+:: classdist.m ::
+:::::::::::::::::
+::::::::::::::::::
+:: classdistp.m ::
+::::::::::::::::::
+function [d, ub] = classdistp(ua,ub)
+% [D UB] = CLASSDISTP(UA,UB) when given two U matrices returns the 
+% percent difference between the two maximum likeli-hood clusterings
+% as D and also returns UB re-arranged so that its clusters are as
+% lined up with those of UA as well as possible.
+::::::::::::::::::
+:: classdistp.m ::
+::::::::::::::::::
+::::::::::::::::::
+:: cvpfitness.m ::
+::::::::::::::::::
+function f=cvpfitness(u,spikes)
+% F=CVPFITNESS(U,SPIKES) produces a measure of the fitness of
+%  the clustering U based on the average of the inverse of the CVP
+%  for each cluster.  Good clusterings, by definition, minimize the
+%  CVP of the clusters.
+::::::::::::::::::
+:: cvpfitness.m ::
+::::::::::::::::::
+:::::::::::
+:: cvp.m ::
+:::::::::::
+function r=cvp(spikes)
+% R=CVP(SPIKES) returns the CVP for the spike trains in SPIKES
+:::::::::::
+:: cvp.m ::
+:::::::::::
+:::::::::::::::
+:: dataseg.m ::
+:::::::::::::::
+function seg=dataseg(start,finish,varargin)
+% SEG=DATASEG(start,finish) creates a segment objects with all the default parameters 
+% to perform a clustering.  Due to limitations inherent in the Matlab
+% environment, this serves as little other than a place to store all
+% relavent parameters to a segment of data and a handle upon which to perform
+% clusterings.
+% DATASEG(start,finish,...) takes arguments not unlike the standard built-in Matlab object
+% -like constructs.  That is, as a list of string, value pairs.
+% EG:
+%
+%   DATASEG('q', logspace(-3, 0.2, 150), 'n', 2:5)
+%
+% Would return a seg object with the specified logarithmic range of q values
+% and a parameter stating that cluster numbers from two to five should be 
+% searched over.
+%
+% Supported paramters are:
+% 
+% q:        A range of q values to search for clusters
+%
+% searchq:  Used to specify additional information for the 
+%           trial clustering procedure.  By default, it sets the
+%           spacing of search points and the minimum density of search
+%           points for use with the DSTRIALCLUSTER_SEARCH function.
+%           
+% k:        A range of k values to search
+%
+% n:        A range of integer number of cluster values to search
+%
+% r:        The number of times to repeat each clusterings.
+%
+% coptions: FCM options for trial clustering
+%           coptions(1):    fuzzyness [2]
+%           coptions(2):    max iterations [1000]
+%           coptions(3):    convergence criteria [1e-5]
+%           coptions(4):    verbose mode { [0] | 1 }
+%                           verbose mode is disabled for myfcm
+%
+% cpca:     Whether to reduce the dimensionality of the metric space
+%           before clustering using principle component analysis.
+%           Set to -1 to turn off PCA, otherwise specify the number of
+%           components to keep (a good ballpark is 20).
+% 
+% hood:     The number of previous clusterings to compare a given cluster
+%           to in order to decide if it is unique enough to be kept.
+% 
+% sameness: As each cluster is found, it is compared to the HOOD previous
+%           kept clusterings to see if it unique enough to keep.  This is
+%           done by caclulating the mutual information between the two
+%           clusterings, a quantity which is 1 if the clusterings are identical
+%           and zero if they are completely independent.  The sameness factor
+%           is the minimum information between two clusterings below which
+%           the clusterings are considered discreet.  A sameness of .9
+%           corresponds very roughly to 90% correlation between the two clusterings.
+%
+% cfitstr:  A string which, when evaluated, produces a fitness measure
+%           from the output variables of myfcm.  In the scope where this
+%           string is executed, these variables are c, the cluster centers
+%           u, the probabilities of each trial to belong in each cluster, and
+%           e the objective function values for each iteration.
+%           I suggest writing functions of u,e,c and making them available
+%           on the path, and then passing the string representing the function
+%           call.
+%           EG: cfitstr = 'fitness(u)';
+%
+% cmerge:   For two clusters, how similar clusters should be before they merge.
+%           Clusters whose average occupancies are closer than this number will
+%           be automatically merged.
+%
+% sn:       List of the number of clusters to try while clustering spike
+%           times.
+%
+% sr:       The number of times to repeat the spike clusterings.
+%
+% svw:      The Spike Vector Weights.  The vector used for spike time sorting is
+%           [s tpr tpo] where s is the spike time, tpr is the time to the previous
+%           spike (or simply t, if s is the first spike) and tpo is the time to
+%           next spike.  Each dimension is rescaled to have mean .5 and standard
+%           deviation one, then they are all multiplied by a vector [1 svw], in
+%           which svw is a 1x2 matrix describing the weight of importance for the
+%           tpr, tpo dimension compared to the spike time.
+%
+% spikevstr:This is a string which when evaluated in the context of a variable
+%           called "spikes" containing spike times produces a set of vectors to be
+%           sorted by fcm.  If this is '', then the scheme described above is used.
+%           If the user wishes to pass in parameters for this process, they may use
+%           the svw variable as a cell array, for example, to accomplish this.
+%           eg: dseg.spikevstr = 'makevects(spikes, svw)'
+%           Where makevects is a function in the global scope which returns an 
+%           M-by-N matrix where M is the number of spikes and N is the number of
+%           data points.  Order of spike times should be preserved as that of
+%           spikes(:).
+%
+% ssameness:This variable dictates the percentage of similarly classified spikes
+%           below which a clustering is considered distinct from another. 
+%
+% smerge:   For two clusters of spikes times (hence the 's'), how similar
+%           clusters should be before they should be merged.  This follows
+%           the same logic  as the cmerge parameter.
+%
+% sfitstr:  A string which when evaluated produces a cluster fitness measure
+%           from the output variables of myfcm and three other variables:
+%           sd, ss and ssz, which will be available in the scope where the
+%           the string is evaluated.
+%
+% sd:       The penalty for clusterings with double occupancy.  Each instance of
+%           double occupancy incurs this penalty.  Of course, when used
+%           in conjunction with sfitstr, sd may have any meaning which the
+%           supplied fitness measure can deal with.
+%
+% ss:       The penalty for clusterings with very small clusters, as defined
+%           by ssz.  Each instance which falls below the size specified by 
+%           ssz will incur this penalty.  Of course, when used in conjunction
+%           with sfitstr, ss may have any meaning which the supplied fitness
+%           measure can deal with.
+%
+% ssz:      The minimum size a cluster must be larger than not to incur
+%           the fitness penalty ss.  If ssz >= 1 it is interpreted as a 
+%           number of spikes.  If ssz < 1 it is interpreted as a percentage of
+%           the number of trials in the dataset in which the cluster is 
+%           occupied.
+% soptions: FCM options for spike time clustering.  Same as above.
+% 
+% sosz:     The minimum size a cluster must exceed to not be considered an
+%           outlier.  Outliers are not considered in the calculation of
+%           reliability and precision, and they will not be shown in the
+%           event picker.
+%
+:::::::::::::::
+:: dataseg.m ::
+:::::::::::::::
+:::::::::::::::
+:: dataset.m ::
+:::::::::::::::
+function dset=dataset(spikes, name, varargin)
+% DSET=DATASET(SPIKES,NAME) creates a dataset for analysis with the 
+% spike pattern and event finding tools with the spike times in SPIKES
+% and with the name NAME.
+% DSET=DATASET(SPIKES,NAME,...) does the same as above but also accepts 
+% parameter/value pairs like the built-in matlab object-like constructs.
+% 
+% The allowable paramter values are:
+%
+% nt:       The number of trials to include in the analysis.
+%
+% per:      The number of spikes desired per segment.
+%
+% segparam: The ratio of the importantance of getting the right
+%           number of spikes in a segment to cutting the segments
+%           at low density cut points.
+%
+% segbin:   The size of the bins used to estimate the spike rate
+%           in the segmentation procedure.
+% See Also:
+% all functions of the form ds*
+:::::::::::::::
+:: dataset.m ::
+:::::::::::::::
+:::::::::::::
+:: dcAgg.m ::
+:::::::::::::
+function cluster = DCAgg(Distance, Method, k)
+%DCAGG Performs agglomerative clustering
+% Cluster = DCAGG(Distance, Method, k) where Distance is
+% square dissimilarity matrix, with Inf on leading diagonal,
+% Method is one of 'single', 'complete' or 'centroid',
+% and k is number of clusters. Cluster is a cell array showing
+% which entities belong to which cluster.
+:::::::::::::
+:: dcAgg.m ::
+:::::::::::::
+:::::::::::::::::
+:: dsaggclus.m ::
+:::::::::::::::::
+function dsaggclus(ds)
+% DSAGGCLUS(DS) launches the agglomerative clustering based cluster
+%  picker.  The unique (or mostly unique) clusterings found in the
+%  dstrialclus phase are themselves clustered agglomeratively and then
+%  the user is allowed to click through the clustering tree in search
+%  of an appropriate clusterings.  This is not yet implemented.
+:::::::::::::::::
+:: dsaggclus.m ::
+:::::::::::::::::
+::::::::::::::::::::::::
+:: dsautofindevents.m ::
+::::::::::::::::::::::::
+function ds=dsautofindevents(ds)
+% DS=DSAUTOFINDEVENTS(DS) takes a DS object which has at least
+%  some segments with models for each trial cluster and produces
+%  an automatic guess as to the global event structure.
+%  Subsequent calls to DSEMODEL(DS) converts this information into
+%  a global event model which can be used to validate the clustering.
+%  
+%  This doesn't work as well as you would like it to, please see
+%  DSEVTPICKER for this step of the analysis
+::::::::::::::::::::::::
+:: dsautofindevents.m ::
+::::::::::::::::::::::::
+:::::::::::::::::
+:: dsautoseg.m ::
+:::::::::::::::::
+function dset = dsautoseg(dset)
+% DSET = DSAUTOSEG(DSET) resegments the data represented by dset
+% without supervision.
+% This function works almost as well as you would like it to, but
+% I suggest using the pleasant and painless user interface with other
+% manual segmenting options.  See DSMANSEG
+:::::::::::::::::
+:: dsautoseg.m ::
+:::::::::::::::::
+:::::::::::::::::::::::::
+:: dsautospikechoose.m ::
+:::::::::::::::::::::::::
+function ds=dsautospikechoose(ds,seginds)
+% DS=DSAUTOSPIKECHOOSE(DS) automatically chooses the spike clusterings
+%  with the best fitnesses.
+% Works passably well, but please also see DSEVTPICKER for clustering
+%  spike times.
+:::::::::::::::::::::::::
+:: dsautospikechoose.m ::
+:::::::::::::::::::::::::
+:::::::::::::::::::
+:: dsconstants.m ::
+:::::::::::::::::::
+RAW         = 0;
+:::::::::::::::::::
+:: dsconstants.m ::
+:::::::::::::::::::
+::::::::::::::::::::
+:: dsegaddtclus.m ::
+::::::::::::::::::::
+function dseg = dsegaddtclus(dseg,c,u,e,indx, fit)
+% DSEG = DSEGADDTCLUS(DSEG,U) adds the clustering represented by C,U,E to
+%   the segments catalog of unique clusterings.
+%
+%   Mostly for internal use.
+::::::::::::::::::::
+:: dsegaddtclus.m ::
+::::::::::::::::::::
+::::::::::::::::::::::::::
+:: dsegautofindevents.m ::
+::::::::::::::::::::::::::
+function dseg=dsegautofindevents(spikes, dseg)
+% DSEG = DSEGAUTOFINDEVENTS(DSEG) takes a segment DSEG and attempts to use
+%  its trial-wise model information to construct a global event grouping.
+%  A subsequent call to DSEGEMODEL will use this information to create a 
+%  global event model.
+%
+%  Currently this function works ambiguously.  Please use DSEVTPICKER.
+::::::::::::::::::::::::::
+:: dsegautofindevents.m ::
+::::::::::::::::::::::::::
+:::::::::::::::::::::::
+:: dsegcmidrelabel.m ::
+:::::::::::::::::::::::
+function dseg=dsegcmidrelabel(dseg)
+% DSEG=DSEGCMIDRELABEL(DSEG) returns DSEG with a CLUSMOD structure
+%  which has had its IDS relabeled to be contiguous.
+:::::::::::::::::::::::
+:: dsegcmidrelabel.m ::
+:::::::::::::::::::::::
+:::::::::::::::::
+:: dsegcmids.m ::
+:::::::::::::::::
+function ids = dsegcmids(dseg);
+% IDS=DSEGCMIDS(DSEG) returns the IDS for the trial events
+:::::::::::::::::
+:: dsegcmids.m ::
+:::::::::::::::::
+:::::::::::::::::::::
+:: dsegdrawmodel.m ::
+:::::::::::::::::::::
+function dsegdrawmodel(dseg)
+% DSEGDRAWMODEL(DSEG) draws the current model of the data represented by DSEG
+%  to the currently selected axes, respecting the hold status.
+:::::::::::::::::::::
+:: dsegdrawmodel.m ::
+:::::::::::::::::::::
+::::::::::::::::::
+:: dsegemodel.m ::
+::::::::::::::::::
+function dseg = dsegemodel(spikes, dseg)
+% DSEG = DSEGEMODEL(DSEG) returns a DSEG object with an event
+%  model.
+% 
+% The returned DSEG object will contain two new fields, EVENTMODEL
+% and EVENTFORM.  The EVENTFORM object contains as many columns as
+% there are events and as many rows as there are trials.  Each entry
+% corresponds to the spike time for a given event and a given trial.
+%
+% The EVENTMODEL object countains a list of event structures which
+% have the following fields:
+%   spikes:     Contains the spike times for the given event.
+%   trials:     Contains the trials for the spikes listed in spikes
+%   
+%   EVENTMODEL also includes some misc items for internal use.
+::::::::::::::::::
+:: dsegemodel.m ::
+::::::::::::::::::
+:::::::::::::::::::
+:: dsegevtcomp.m ::
+:::::::::::::::::::
+function dseg = dsegevttest(spikes,dseg)
+% DSEG = DSEGEVTTTEST(DSET) decides two events are the same by doing 
+%  a ttest at 5% confidence.
+:::::::::::::::::::
+:: dsegevtcomp.m ::
+:::::::::::::::::::
+:::::::::::::::::::
+:: dsegevtlike.m ::
+:::::::::::::::::::
+function dseg = dsegevtlike(spikes,dseg)
+% DSEG = DSEGEVTLIKE(SPIKES, DSEG) produces a spike time model
+% using likelihood estimates to decide if two events are the same.
+% Each pair of events is tested to see if it is more likely that they
+% arise from a single guassian distribution or two gaussian distributions.
+:::::::::::::::::::
+:: dsegevtlike.m ::
+:::::::::::::::::::
+::::::::::::::::::::
+:: dsegevtmerge.m ::
+::::::::::::::::::::
+function dseg = dsegevttest(spikes,dseg)
+% DSEG = DSEGEVTTTEST(DSET) decides two events are the same by doing 
+%  a ttest at 5% confidence.
+::::::::::::::::::::
+:: dsegevtmerge.m ::
+::::::::::::::::::::
+::::::::::::::::::::
+:: dsegevtttest.m ::
+::::::::::::::::::::
+function dseg = dsegevttest(spikes,dseg)
+% DSEG = DSEGEVTTTEST(DSET) decides two events are the same by doing 
+%  a ttest at 5% confidence.
+::::::::::::::::::::
+:: dsegevtttest.m ::
+::::::::::::::::::::
+:::::::::::::::::::
+:: dsegfindsig.m ::
+:::::::::::::::::::
+function dseg=dsegfindsig(dseg)
+% DSEG=DSEGFINDSIG(DSEG) finds the pattern strength and significance
+%  for a segment.  
+%
+%   For a description of these quantities see PATTERN_SIG and PATTERN_STR
+:::::::::::::::::::
+:: dsegfindsig.m ::
+:::::::::::::::::::
+::::::::::::::::::::::
+:: dseggetclusbyq.m ::
+::::::::::::::::::::::
+function [cluss,fits,inds] = dseggetclusbyq(dseg,q,p)
+% CLUSTERINGS = DSEGGETCLUSBYQ(DSEG,Q,P) returns all the clusterings in DSEG
+% for the value q +/- p percent.  If Q is a vector of length 2, and P is left
+% out of the call, then all 'unique' clusterings whose average q value is
+% between q(1) and q(2) are returned. 
+%
+% [CLUS,FITS,INDS] = DSSEGGETCLUSBYQ(DSEG,Q) also returns the fitnesses for
+% the returned clusterings and the indices in terms of q,k,n (and r) which 
+% produced them.
+::::::::::::::::::::::
+:: dseggetclusbyq.m ::
+::::::::::::::::::::::
+:::::::::::::::::
+:: dsegmodel.m ::
+:::::::::::::::::
+function dseg = dsegmodel(spikes, dseg)
+% DSEG = DSEGMODEL(SPIKES, DSEG) returns a DSEG object with model
+%  information if the DSEG object has a a spike time clustering.
+:::::::::::::::::
+:: dsegmodel.m ::
+:::::::::::::::::
+:::::::::::::::::::::
+:: dsegnullmodel.m ::
+:::::::::::::::::::::
+function dseg = dsegnullmodel(spikes, dseg)
+% DSEG = DSEGNULLSPIKECHOOSE(SPIKES,DSEG) returns a 'null' spike time clustering:
+%  every spike belongs to a single cluster for each cluster of trials.
+%
+% This can be used as a quick step between trial clustering and using DSEVTPICKER
+% to cluster spike times by hand.
+:::::::::::::::::::::
+:: dsegnullmodel.m ::
+:::::::::::::::::::::
+:::::::::::::::::
+:: dsegqdens.m ::
+:::::::::::::::::
+tc = ds.segs(1).tcluss;
+:::::::::::::::::
+:: dsegqdens.m ::
+:::::::::::::::::
+::::::::::::::::
+:: dsegrast.m ::
+::::::::::::::::
+function dsegrast(spikes, seg )
+% DSEGRAST(SPIKES, DSEG) draws a rastergram representing the segment passed
+%  in onto the current axes.  (Using SPIKES)
+::::::::::::::::
+:: dsegrast.m ::
+::::::::::::::::
+::::::::::::::::
+:: dsemodel.m ::
+::::::::::::::::
+function ds= dsemodel(ds, seginds)
+% DS=DSEMODEL(DS) returns DS with its global event model completed
+%  if the DS object has proceeded to the point of having a 
+%  trial-cluster wise model of events.
+%
+% For each applicable segment of the data, this appends two
+%  fields to the segment, each described in greated detail in 
+% DSEGEMODEL.
+%
+%   See Also: DSEGEMODEL
+::::::::::::::::
+:: dsemodel.m ::
+::::::::::::::::
+::::::::::::::::::::::
+:: dsevt_commitcb.m ::
+::::::::::::::::::::::
+function dsevt_commitcb(src,evt)
+% DSEVT_COMMITCB(SRC,EVT) is a callback for the DSEVTPICKER
+::::::::::::::::::::::
+:: dsevt_commitcb.m ::
+::::::::::::::::::::::
+::::::::::::::::::::::
+:: dsevtconstants.m ::
+::::::::::::::::::::::
+ADD_TO      = 1;
+::::::::::::::::::::::
+:: dsevtconstants.m ::
+::::::::::::::::::::::
+::::::::::::::::::::::
+:: dsevt_drawaxes.m ::
+::::::::::::::::::::::
+function dsevt_drawaxes(ad)
+% This is a helper function for the dsevtpicker applet.
+%  It handles drawing the axes given an ad object representing
+%  the state of the applet.
+::::::::::::::::::::::
+:: dsevt_drawaxes.m ::
+::::::::::::::::::::::
+:::::::::::::::::::::::
+:: dsevt_drawmodel.m ::
+:::::::::::::::::::::::
+function ad = dsevt_drawmodel(ad)
+% AD=DSEVT_DRAWMODEL(AD) handles drawing the model axes for the 
+%  DSEVTPICKER applet.
+:::::::::::::::::::::::
+:: dsevt_drawmodel.m ::
+:::::::::::::::::::::::
+::::::::::::::::::::
+:: dsevt_figbdf.m ::
+::::::::::::::::::::
+function dsevt_figbdf(src,evt)
+% DSEVT_FIGBDF(SRC,EVT) is a callback function for the event picker applet
+::::::::::::::::::::
+:: dsevt_figbdf.m ::
+::::::::::::::::::::
+:::::::::::::::::::::::::::
+:: dsevt_gettriallines.m ::
+:::::::::::::::::::::::::::
+function lines=dsevt_gettriallines(dseg)
+% LINES=DSEVT_GETTRIALLINES(DSEG) takes a DATASEG object for which
+%  a trial clustering has been chosen and returns the lines which seperate
+%  the clusterings on a rastergram.
+:::::::::::::::::::::::::::
+:: dsevt_gettriallines.m ::
+:::::::::::::::::::::::::::
+:::::::::::::::::::
+:: dsevt_kdfcn.m ::
+:::::::::::::::::::
+function dsevt_kdfcn(src,evt)
+% DSEVT_KDFCN(SRC,EVT) is a callback function for the DSEVTPICKER
+:::::::::::::::::::
+:: dsevt_kdfcn.m ::
+:::::::::::::::::::
+::::::::::::::::::::
+:: dsevt_modbdf.m ::
+::::::::::::::::::::
+function dsevt_modbdf(src, evt)
+% DSEVT_MODBDF(SRC,EVT) is a callback function for the model
+%  axes in the event picker.
+::::::::::::::::::::
+:: dsevt_modbdf.m ::
+::::::::::::::::::::
+:::::::::::::::::::
+:: dsevtpicker.m ::
+:::::::::::::::::::
+function ad=dsevtpicker(ds)
+% DSEVTPICKER(DS) starts the event picking application for the dataset
+%  object.
+:::::::::::::::::::
+:: dsevtpicker.m ::
+:::::::::::::::::::
+:::::::::::::::::::::
+:: dsevt_rastbdf.m ::
+:::::::::::::::::::::
+function dsevt_rastbdf(src,evt)
+% DSEVT_RASTBDF(SRC,EVT) is a callback function for the raster
+%  axes in the event picker.
+:::::::::::::::::::::
+:: dsevt_rastbdf.m ::
+:::::::::::::::::::::
+::::::::::::::::::
+:: dsevt_rast.m ::
+::::::::::::::::::
+function dsevt_rast(ad)
+% DSEVT_RAST(AD) is an internal function for the event picker.
+%  It draws a raster.
+::::::::::::::::::
+:: dsevt_rast.m ::
+::::::::::::::::::
+:::::::::::::::::::::
+:: dsevt_rectbdf.m ::
+:::::::::::::::::::::
+function dsevt_rectbdf(src,evt)
+% DSEVT_RECTBDF(SRC,EVT) is a callback function which handles the 
+%  rectangle events for the DSEVTPICKER
+:::::::::::::::::::::
+:: dsevt_rectbdf.m ::
+:::::::::::::::::::::
+:::::::::::::::::::::
+:: dsevt_scluscb.m ::
+:::::::::::::::::::::
+function dsevt_scluscb(src,evt)
+% DSEVT_SCLUSCB(SRC,EVT) is a callback function for the 
+%  DSPICKER
+:::::::::::::::::::::
+:: dsevt_scluscb.m ::
+:::::::::::::::::::::
+:::::::::::::::::::::::
+:: dsevt_sclusdncb.m ::
+:::::::::::::::::::::::
+function dsevt_sclusdncb(src,evt)
+% DSEVT_SCLUSDNCB(SRC,EVT) is a callback function for the DSEVTPICKER
+:::::::::::::::::::::::
+:: dsevt_sclusdncb.m ::
+:::::::::::::::::::::::
+:::::::::::::::::::::::
+:: dsevt_sclusupcb.m ::
+:::::::::::::::::::::::
+function dsevt_sclusupcb(src,evt)
+% DSEVT_SCLUSUPCB(SRC,EVT) is a callback function for the DSEVTPICKER
+:::::::::::::::::::::::
+:: dsevt_sclusupcb.m ::
+:::::::::::::::::::::::
+::::::::::::::::::::::
+:: dsevt_segnumcb.m ::
+::::::::::::::::::::::
+function dsevt_segnumcb(src,evt)
+% DSEVT_SEGNUMCB(SRC,EVT) is a callback function for the dsevtpicker.
+::::::::::::::::::::::
+:: dsevt_segnumcb.m ::
+::::::::::::::::::::::
+::::::::::::::::::::::::
+:: dsevt_segnumdncb.m ::
+::::::::::::::::::::::::
+function dsevt_segnumdncb(src, evt)
+% DSEVT_SEGNUMDNCB(SRC,EVT) is a callback funtion for DSEVTPICKER
+::::::::::::::::::::::::
+:: dsevt_segnumdncb.m ::
+::::::::::::::::::::::::
+::::::::::::::::::::::::
+:: dsevt_segnumupcb.m ::
+::::::::::::::::::::::::
+function dsevt_segnumupcb(src,evt)
+% DSEVT_SEGNUMUPCB(SRC,EVT) is a callback function for DSEVTPICKER
+::::::::::::::::::::::::
+:: dsevt_segnumupcb.m ::
+::::::::::::::::::::::::
+::::::::::::::::::::
+:: dsfindevents.m ::
+::::::::::::::::::::
+function ds = dsfindevents(ds)
+% DS=FINDEVENTS(DS) takes a DS object for which all segments have been
+%  analyzed to the point of having a model of each trial cluster.
+%  It returns a DS object with an estimate of the global event structure.
+::::::::::::::::::::
+:: dsfindevents.m ::
+::::::::::::::::::::
+:::::::::::::::::
+:: dsfindsig.m ::
+:::::::::::::::::
+function ds=dsfindsig(ds, seginds)
+% DS=DSFINDSIG(DS) takes a DS object and for each segment which
+%  has an event model, produces a pattern significance and 
+%  pattern strength measurement for it.
+%
+%  Each segment object for which this is applicable gains two
+%  two fields, STRENGTH and SIGNIFICANCE which reflect how independent
+%  spiking activity is between events.
+%
+%   See also PATTERN_SIG and PATTERN_STR
+:::::::::::::::::
+:: dsfindsig.m ::
+:::::::::::::::::
+::::::::::::::::::::
+:: dsgetseginds.m ::
+::::::::::::::::::::
+function seginds = dsgetseginds(ds,ii,minstate,clearstate)
+% SEGINDS = DSGETSEGINDS(DS,[],MINSTATE,CLEARSTATE) returns the indices
+%  which are at least MINSTATE but not greater than or equal to CLEARSTATE.
+%  Prints a message describing which clusters these are.
+%
+% SEGINDS = DSGETSEGINDS(DS,II,MINSTATE) returns the intersection of the set
+%  given by II and the set of segments whose status is greater than MINSTATE.
+%  Prints a message indicating which segments these are.
+::::::::::::::::::::
+:: dsgetseginds.m ::
+::::::::::::::::::::
+:::::::::::::::::
+:: dsmanclus.m ::
+:::::::::::::::::
+function dsmanclus(ds)
+% DSMANCLUS(DS) launches the GUI for the manual cluster picker
+%  associated with the pattern_tools toolbox.
+:::::::::::::::::
+:: dsmanclus.m ::
+:::::::::::::::::
+::::::::::::::::
+:: dsmanseg.m ::
+::::::::::::::::
+function dsmanseg(ds)
+% DSMANSEG(DS) opens the interactive segment picker.
+% If DS is a variable in the base workspace, changes will be
+% applied to DS.  If DS is not a base variable, one will be created
+% with the name DS when changes are committed.
+::::::::::::::::
+:: dsmanseg.m ::
+::::::::::::::::
+:::::::::::::::
+:: dsmerge.m ::
+:::::::::::::::
+function ds = dsmerge(ds,seginds)
+% DS = DSMERGE(DS) attempts to the clusters represented in ds, which
+%  has progressed to the point of having an event model, by comparing
+%  clusters on a pairwise basis and calculating the increase in pattern
+%  significance if a merger is attempted.
+%
+%  For each pair of clusters the quantity (s1+s2)/(2*st) is calculated,
+%   where s1,2 are the significances of the two groups seperately and
+%   st is the signficance of the groups combined.  A higher pattern
+%   significance for the combined groups indicates an unfortuitous merger
+%   and the above ratio will be less than one.
+%
+%  The enthusiasm with which this function merges clusters is determined by
+%   a DATASEG parameter SIGMERGE which is the range around 1 for which mergers
+%   are to happen according to the above score.
+%
+%  The DATASEG parameter SIGPASSES determines the number of passes 
+%   which the merger goes through.  For each pass, all pairwise signficance
+%   measures are calculated and mergers performed.  In the case that two
+%   clusters may both be merged with a third, the merger with the best score
+%   is taken.
+%  If SIGPASSES is -1, the algorithm continues to make passes until no clusters
+%   can be merged.
+%
+%   See Also:  DATASEG, DSIGSUBS
+:::::::::::::::
+:: dsmerge.m ::
+:::::::::::::::
+:::::::::::::::
+:: dsmodel.m ::
+:::::::::::::::
+function ds=dsmodel(ds,seginds)
+% DS=DSMODEL(DS) creates models for the spiking responses contained in DS 
+%  for the segments in which spike clusterings exist, but which do not yet
+%  have models for their current parameter values.
+% DS=DSMODEL(DS,SEGINDS) attempts to update the models for the segments
+%  given by SEGINDS, irrespective of whether they are up to date or not.
+:::::::::::::::
+:: dsmodel.m ::
+:::::::::::::::
+::::::::::::::::::::::
+:: dspicker_a1bdn.m ::
+::::::::::::::::::::::
+function dspicker_a1bdn(src,evt)
+% DSPICKER_A1BDN(SRC,EVT) is an internal helper function for the dspicker
+::::::::::::::::::::::
+:: dspicker_a1bdn.m ::
+::::::::::::::::::::::
+::::::::::::::::::::::
+:: dspicker_a2bdn.m ::
+::::::::::::::::::::::
+function dspicker_a2bdn(src,evt)
+% DSPICKER_A2BDN is an internal helper function for the dspicker
+::::::::::::::::::::::
+:: dspicker_a2bdn.m ::
+::::::::::::::::::::::
+:::::::::::::::::::::::
+:: dspicker_commit.m ::
+:::::::::::::::::::::::
+function dspicker_commit(src,evt)
+% DSPICKER_COMMIT(SRC,EVT) is a help function for the DSPICKER application.
+%  It writes out the changes made to the ds object, if an object name is
+%  available.
+:::::::::::::::::::::::
+:: dspicker_commit.m ::
+:::::::::::::::::::::::
+::::::::::::::::
+:: dspicker.m ::
+::::::::::::::::
+function dspicker(ds)
+% DSPICKER is a cluster picker modelled after the CR picker tree.
+%  It provides a cluster picking environment which uses the fitness
+%  of a clusterings as a cue.
+::::::::::::::::
+:: dspicker.m ::
+::::::::::::::::
+::::::::::::::
+:: dsrast.m ::
+::::::::::::::
+function hs = dsrast(ds)
+% DSRAST(DS) draws a rastergram of the data in ds, illustrating 
+%  clusterings for segments in which they have been chosen.
+%  HS = DSRAST(DS) returns a cell array of cell arrays.  The nth
+%  cell array corresponds to the nth segment in the data, while
+%  the kth element of the nth cell array holds the handles to the spikes
+%  drawn to the screen.
+%  
+%  DSRAST draws to the current axes object and respects the hold flag
+::::::::::::::
+:: dsrast.m ::
+::::::::::::::
+:::::::::::::::::
+:: dssegdraw.m ::
+:::::::::::::::::
+function dssegdraw(ds)
+% DSSEGDRAW(DS) draws the rastergram of DS's data with lines indicating the
+% current segmentation.  This draws to the current axis, respecting the
+% state of the hold variable.
+:::::::::::::::::
+:: dssegdraw.m ::
+:::::::::::::::::
+::::::::::::::::
+:: dssegset.m ::
+::::::::::::::::
+function ds = dssegset(ds,varargin)
+% DS = DSSETALL(DS,'name',value,'name',value,...) sets the segment
+%   properties specified by each name to the values given.  Valid
+%   name/value pairs can be read in the help documentation for 
+%   DATASEG.  Type 'help dataseg'.  All segments are set.
+%
+% DS = DSSETALL(DS,SEGSTRUCT) uses the fields of SEGSTRUCT to
+%   set the values of all the segments.  Any fields not listed in
+%   segstruct will be left unchanged.
+%
+% DS = DSSETALL(DS,II,'name',value,'name',value,...) sets only
+%   those segments specified by the indices II with the given
+%   name/value pairs.
+%
+% DS = DSSETALL(DS,II,SEGSTRUCT) uses the fields of SEGSTRUCT to
+%   set the values of the segments specified by II.
+%
+::::::::::::::::
+:: dssegset.m ::
+::::::::::::::::
+::::::::::::::::
+:: dssetall.m ::
+::::::::::::::::
+function ds = dssegset(ds,varargin)
+% DS = DSSETALL(DS,'name',value,'name',value,...) sets the segment
+%   properties specified by each name to the values given.  Valid
+%   name/value pairs can be read in the help documentation for 
+%   DATASEG.  Type 'help dataseg'.  All segments are set.
+%
+% DS = DSSETALL(DS,SEGSTRUCT) uses the fields of SEGSTRUCT to
+%   set the values of all the segments.  Any fields not listed in
+%   segstruct will be left unchanged.
+%
+% DS = DSSETALL(DS,II,'name',value,'name',value,...) sets only
+%   those segments specified by the indices II with the given
+%   name/value pairs.
+%
+% DS = DSSETALL(DS,II,SEGSTRUCT) uses the fields of SEGSTRUCT to
+%   set the values of the segments specified by II.
+%
+::::::::::::::::
+:: dssetall.m ::
+::::::::::::::::
+:::::::::::::::::::::
+:: dssimplesplit.m ::
+:::::::::::::::::::::
+function ds=dssimplesplit(ds,seginds,q)
+:::::::::::::::::::::
+:: dssimplesplit.m ::
+:::::::::::::::::::::
+::::::::::::::::::::::
+:: dsspikecluster.m ::
+::::::::::::::::::::::
+function ds = dsspikecluster(ds, seginds)
+% DS = DSSPIKECLUSTER(DS) builds a set of spike clusterings from the
+%  from DS, given that clusterings have been chosen for each segment.
+%  Segments which do not have clusterings will be skipped.
+::::::::::::::::::::::
+:: dsspikecluster.m ::
+::::::::::::::::::::::
+::::::::::::::::::
+:: dstaggclus.m ::
+::::::::::::::::::
+function ds = dstaggclus(ds)
+% DS = DSTAGGCLUS(DS) performs an agglomerative clusterings on the
+% clusterings found in DS
+%
+% This function is experimental, as are all agglomerative clustering
+%  functions in this data set.  For now, please use MYFCM.
+::::::::::::::::::
+:: dstaggclus.m ::
+::::::::::::::::::
+::::::::::::::::::::::
+:: dstrialcluster.m ::
+::::::::::::::::::::::
+function ds = dstrialcluster(ds,seginds)
+% DS = DSTRIALCLUSTER(DS) performs the metric space calculations (which are
+%   not stored) and the trial clusters for all segments in DS which are
+%   indicated as out of date.  A segment is flagged as out of date for trial
+%   clusterings if the following fields are changed: {q, k, n, cpca, coptions}
+%
+%   For definitions of these fields see help on DATASEG
+%
+% DS = DSTRIALCLUSTER(DS,II) forces reclustering of the segments given by
+%   II, irrespective of the status flags of those segments.
+%
+::::::::::::::::::::::
+:: dstrialcluster.m ::
+::::::::::::::::::::::
+::::::::::::::
+:: efrast.m ::
+::::::::::::::
+function efrast(ef)
+% EFRAST(EF) plots a rastergram of the event form EF.
+::::::::::::::
+:: efrast.m ::
+::::::::::::::
+:::::::::::
+:: ent.m ::
+:::::::::::
+function [s, sx, sy] = ent(ma)
+%  [S, SX, SY] = ENT(MA) returns the entropy of MA.  S is the entropy, SX
+%  is the first marginal and SY is the second marginal.
+:::::::::::
+:: ent.m ::
+:::::::::::
+::::::::::::::::::
+:: eventmerge.m ::
+::::::::::::::::::
+function r=eventmerge(e1,e1)
+% R=EVENTMERGE(E1,E2) returns the statistic garned by comparing
+%  the two events or distributioons in E1 and E2 in the following way
+%  R = STD(E1)+STD(E2)/(2*STD([E1 E2]));
+::::::::::::::::::
+:: eventmerge.m ::
+::::::::::::::::::
+:::::::::::::::::::
+:: evttogbutcb.m ::
+:::::::::::::::::::
+function evttogbutcb(src,evt)
+% This function handles the toggle button callbacks for the 
+% manual segment picker.
+:::::::::::::::::::
+:: evttogbutcb.m ::
+:::::::::::::::::::
+::::::::::::
+:: fake.m ::
+::::::::::::
+function spikes = fake(m,s,r,nt)
+% SPIKES=FAKE(M,S,R,NT) returns a set of NT fake trials with events
+% given by the statistics given by M,S and R.  M,S, and R specify the
+% means, standard deviations and reliabilites of the data respectively.
+::::::::::::
+:: fake.m ::
+::::::::::::
+::::::::::::::::
+:: fastrast.m ::
+::::::::::::::::
+function h=fastrast(dataset)
+% H=FASTRAST(DATASET) is a wrapper for RAST which uses the FAST option by
+% default
+::::::::::::::::
+:: fastrast.m ::
+::::::::::::::::
+::::::::::::::::
+:: findsegs.m ::
+::::::::::::::::
+function segs = findsegs(spikes, sp, spike_rate, times)
+% SEGS=FINDSEGS(SPIKES, SP) returns a set of
+% segmentations found by placing delimiters at troughs in the spike rate
+% which minimize the score given by (SP.PER - avgnum)^SP.POWN 
+% + rate_at_cut^SP.POWD.  A default SP can be made with SPMAKE.
+% Returns SEGS as an array of numeric arrays of the cut times.  BIN is
+% the bin size used to estimate the spike rate.
+::::::::::::::::
+:: findsegs.m ::
+::::::::::::::::
+:::::::::::::::
+:: fitness.m ::
+:::::::::::::::
+function f=fitness(u)
+%F=FITNESS(U) returns the (SU) fitness of the clustering U.
+:::::::::::::::
+:: fitness.m ::
+:::::::::::::::
+::::::::::::::
+:: jointh.m ::
+::::::::::::::
+function v = jointh(x,y)
+% V = JOINTH(X,Y) returns the joint entropy between X,Y
+::::::::::::::
+:: jointh.m ::
+::::::::::::::
+::::::::::::::
+:: lltest.m ::
+::::::::::::::
+
+::::::::::::::
+:: lltest.m ::
+::::::::::::::
+:::::::::::::::::
+:: mltestext.m ::
+:::::::::::::::::
+function bool=mltestext(s1,r1,p1,s2,r2,p2,ts)
+% BOOL = MLTESTEXT(S1,R1,P1,S2,R2,P2,THRESH) extended Maximum
+%  likelyhood test of event similarity.  It also tests
+%  for similarity between the reliabilities and precisions
+%  of the events, given by r1 and r2 and p1 and p2 respectively.
+:::::::::::::::::
+:: mltestext.m ::
+:::::::::::::::::
+::::::::::::::
+:: mltest.m ::
+::::::::::::::
+function bool = mltest(d1,d2,ts)
+% BOOL = MLTEST(D1,D2) returns 1 if it is more likely that the
+%  distributions (1d) D1 and D2 are drawn from two seperate 
+%  guassians and 1 if they are more likely to be from a single 
+%  distributions.
+::::::::::::::
+:: mltest.m ::
+::::::::::::::
+::::::::::::::
+:: mtfake.m ::
+::::::::::::::
+function spikes = mtfake(m,s,r,tc,nt)
+% SPIKES=MTFAKE(M,S,R,TC,NT) returns a surrogate dataset 
+% with events at the means stored in M and standard deviations
+% and reliabilities given by S, and R.  TC indicates which 
+% cluster the event appears in (each event can appear in multiple
+% clusters).  NT is the number of clusters desired for each pattern
+% specified in TC.  That is length(unique(tc))==length(nt)
+::::::::::::::
+:: mtfake.m ::
+::::::::::::::
+::::::::::::::
+:: mutinf.m ::
+::::::::::::::
+function v=mutinf(x,y)
+% V = MUTINF(X,Y) returns the mutual information between X,Y
+::::::::::::::
+:: mutinf.m ::
+::::::::::::::
+:::::::::::::::::::::
+:: oldoldscratch.m ::
+:::::::::::::::::::::
+load ds
+:::::::::::::::::::::
+:: oldoldscratch.m ::
+:::::::::::::::::::::
+::::::::::::::::::
+:: oldscratch.m ::
+::::::::::::::::::
+
+::::::::::::::::::
+:: oldscratch.m ::
+::::::::::::::::::
+:::::::::::::::::::
+:: pattern_sig.m ::
+:::::::::::::::::::
+function [s,sv]=pattern_sig(w, ip, nr)
+% S=CSIG(W,IP,NR) calculates the cluster significance for the clustering represented
+% by W, where the probability of each column is given by IP.
+% This function normalizes the significance by comparing it to fake experiments
+% in which there is no significance be construction but which otherwise have 
+% similar statistics.  S will be nearly one for insignificant data and larger
+% than one for data with patterns.  SV is the standard deviation of this measure
+% with respect to the NR surrogate data sets generated.
+% If NR is left out of the function call, then 10 surrogate data sets are used.
+:::::::::::::::::::
+:: pattern_sig.m ::
+:::::::::::::::::::
+:::::::::::::::::::
+:: pattern_str.m ::
+:::::::::::::::::::
+function [ps, dev] = patstren( w, nr )
+:::::::::::::::::::
+:: pattern_str.m ::
+:::::::::::::::::::
+::::::::::::::::::
+:: pointinpos.m ::
+::::::::::::::::::
+function tf = pointinobject(p,pos)
+% TF=POINTINOBJECT(P,POS) returns true if the given point lies within the
+%  given object.
+::::::::::::::::::
+:: pointinpos.m ::
+::::::::::::::::::
+::::::::::::
+:: rast.m ::
+::::::::::::
+function h=rast( spk, aux, h, style )
+% H=RAST(SPK) plots a rastergram of the spikes in SPK
+% H=RAST(SPK, [], H) plots the rastergram to the axes denoted by H.
+% H=RAST(SPK, LABELS) plots a sorted rastergram of the spikes in spk sorted
+% by cluster identity and color coded.
+% H=RAST(SPK, LABELS, H) does the same to the axes H.
+::::::::::::
+:: rast.m ::
+::::::::::::
+::::::::::::
+:: rate.m ::
+::::::::::::
+function [r,t] = rate(spikes, bin)
+% [R, T]=RATE(SPIKES, BIN) returns the spike rate estimate based on bin size BIN
+% and the data set SPIKES.  T is the array of times.
+::::::::::::
+:: rate.m ::
+::::::::::::
+:::::::::::::::
+:: relabel.m ::
+:::::::::::::::
+function cc=relabel(cc)
+% CC=RELABLE(CC) is a function which relabels the clustering in CC
+%  so that UNIQUE(CC) == 1:LENGTH(CC) 
+:::::::::::::::
+:: relabel.m ::
+:::::::::::::::
+::::::::::::
+:: risi.m ::
+::::::::::::
+function rate = risi(spikes, nr)
+% RATE = RISI(SPIKES,NR) calculates the spike rate for the data in
+%  SPIKES using the inverse of the ISIs.  Returns the value in Htz
+%  if the spike times are in ms.  NR is the number of consecutive trials 
+%  each value should be averaged over.
+::::::::::::
+:: risi.m ::
+::::::::::::
+:::::::::::::::
+:: scratch.m ::
+:::::::::::::::
+    if ~exist('q')
+:::::::::::::::
+:: scratch.m ::
+:::::::::::::::
+:::::::::::
+:: scr.m ::
+:::::::::::
+% This is a script to generate a fake data set
+:::::::::::
+:: scr.m ::
+:::::::::::
+:::::::::::::::
+:: sc_test.m ::
+:::::::::::::::
+
+:::::::::::::::
+:: sc_test.m ::
+:::::::::::::::
+:::::::::::::::
+:: section.m ::
+:::::::::::::::
+function subset=section(set, t1, t2)
+%SUBSET=SECTION(SET, T1, T2) returns a SUBSET of the data in SET
+%between the times T1 and T2, with spurious zeros removed.  T1<T2.
+:::::::::::::::
+:: section.m ::
+:::::::::::::::
+::::::::::::::::
+:: sfitness.m ::
+::::::::::::::::
+function f=sfitness(u)
+%F=FITNESS(U) returns the (SU) fitness of the clustering U.
+::::::::::::::::
+:: sfitness.m ::
+::::::::::::::::
+:::::::::::::::::::::
+:: smakevectprpo.m ::
+:::::::::::::::::::::
+function vect=smakevectprpo(spikes, svw)
+% VECT=SMAKEVECTPRPO(SPIKES,SVW) returns vectors for the spikes in spikes
+%  given the vector weights in svw, a 1x2 matrix of values between 0,1.
+%
+% This function is a drop in function for creating vectors for spike clustering
+%  with FCM.
+:::::::::::::::::::::
+:: smakevectprpo.m ::
+:::::::::::::::::::::
+::::::::::::::::::::
+:: spikefitness.m ::
+::::::::::::::::::::
+function f=spikefitness(spikes,u,ss,sd,ssz)
+% F=SPIKEFITNESS(SPIKES,U,SS,SD,SSZ) returns the fitnes of a spike clustering
+%  given a fitness matrix, the cost for singleton clusters SS, the cost
+%  for double occupancy SD and the minimum non-singleton size (not,
+%  as the nomenclature would seem to suggest, necessarily one.)
+::::::::::::::::::::
+:: spikefitness.m ::
+::::::::::::::::::::
+::::::::::::::
+:: spmake.m ::
+::::::::::::::
+function sp = spmake(per, pown, powd, bin, gui)
+% SP = SPMAKE( PER, POWN, POWD, BIN ) returns an SP object with the
+% parameters specified.  SP = SPMAKE returns a default version
+::::::::::::::
+:: spmake.m ::
+::::::::::::::
+:::::::::::::::::
+:: standards.m ::
+:::::::::::::::::
+
+:::::::::::::::::
+:: standards.m ::
+:::::::::::::::::
+:::::::::::::::::::
+:: structequal.m ::
+:::::::::::::::::::
+function bool=structequal(uct1,uct2)
+% BOOL=STRUCTEQUAL(UCT1, UCT2) returns 1 if the structures UCT1 and UCT2
+% are equal under pairwise comparison.  Is called recurisively on
+% substructures.
+:::::::::::::::::::
+:: structequal.m ::
+:::::::::::::::::::
+::::::::::::
+:: test.m ::
+::::::::::::
+p = [];
+::::::::::::
+:: test.m ::
+::::::::::::
+::::::::::::::::
+:: togbutcb.m ::
+::::::::::::::::
+function togbutcb(src,evt)
+% This function handles the toggle button callbacks for the 
+% manual segment picker.
+::::::::::::::::
+:: togbutcb.m ::
+::::::::::::::::
+:::::::::::::::::
+:: trimzeros.m ::
+:::::::::::::::::
+function s=trimzeros(sets)
+% S=TRIMZEROS(SETS) returns the spike train data set with all extraneous
+% padding zeros removed.
+:::::::::::::::::
+:: trimzeros.m ::
+:::::::::::::::::
+::::::::::::
+:: vb2h.m ::
+::::::::::::
+function words = vb2h(w)
+% WORDS = VB2H(W) takes a set of binary words W and (word by digit)
+% and returns a set of hexidecimal strings representing 
+::::::::::::
+:: vb2h.m ::
+::::::::::::
+::::::::::::::::
+:: ventropy.m ::
+::::::::::::::::
+function v=ventropy(x,y)
+% V = H(X) returns the entropy of the vector X
+% V = H(X,Y) returns the joint entropy of X,Y
+::::::::::::::::
+:: ventropy.m ::
+::::::::::::::::
+::::::::::::::::
+:: vpmetric.m ::
+::::::::::::::::
+function ms = vpmetric(spikes, q, k)
+% MS = VPMETRIC(SPIKES,Q,K) returns the metric space for spikes
+% for every value combination of values Q,K.  MS is returned as 
+% a 4D array in which, for ms(i,j,r,s), i indexes the k values, j
+% the q values, r the first spike train, s the second.
+::::::::::::::::
+:: vpmetric.m ::
+::::::::::::::::
+::::::::::::::::::::
+:: zdsms_commit.m ::
+::::::::::::::::::::
+function zdsms_commit(src,evt)
+% ZDSMS_COMMIT(SRC,EVT) is an internal callback function for DSMANSEG
+% It handles saving the segmentation to the work space.
+::::::::::::::::::::
+:: zdsms_commit.m ::
+::::::::::::::::::::
+::::::::::::::::::
+:: zdsms_edcb.m ::
+::::::::::::::::::
+function zdsms_ebcd(src,evtdata)
+% SDSMS_EBCD(SRC,EVTDATA) is a help function for the pattern tools
+% segment tool.  It handles edit box events.
+::::::::::::::::::
+:: zdsms_edcb.m ::
+::::::::::::::::::
+::::::::::::::::::::
+:: zdsms_ekeydn.m ::
+::::::::::::::::::::
+function zdsms_ekeydn(src,evtdat)
+% ZDSMS_KEYDOWN(F,IDENT) is a helper function for the manual segmentation
+% tool from the pattern tools package.  It handles keypress events
+% when editable text boxs have focus.
+::::::::::::::::::::
+:: zdsms_ekeydn.m ::
+::::::::::::::::::::
+::::::::::::::::::
+:: zdsms_fbdf.m ::
+::::::::::::::::::
+function zdsms_fbdf(src,evtdata)
+% ZDSMS_FBDF(SRC,EVTDATA) is a callback function for the segment
+% finding tool, it handles mouse clicks.
+::::::::::::::::::
+:: zdsms_fbdf.m ::
+::::::::::::::::::
+::::::::::::::::::::
+:: zdsms_fkeydn.m ::
+::::::::::::::::::::
+function zdsms_fkeydn(src,evtdata)
+% ZDSMS_FKEYDN(SRC,EVTDATA) is a callback function for the segment
+% finding tool.  It handles keydown events.
+::::::::::::::::::::
+:: zdsms_fkeydn.m ::
+::::::::::::::::::::

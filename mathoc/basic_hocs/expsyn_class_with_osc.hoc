@@ -1,0 +1,15 @@
+proc load_sim_classes(){
+	sim_classes_loaded_bool = 1
+}
+
+if(!sim_classes_loaded_bool) {
+	
+	xopen("oscillation_template.hoc")
+	xopen("pattern_template.hoc")
+	xopen("poisson_template.hoc")
+	xopen("syn_type_keeper.hoc")
+	
+	load_sim_classes()
+	
+}
+

@@ -1,0 +1,28 @@
+aplist = new List()
+apvector= new Vector()
+midsoma.sec apc1 = new APCount(.5)
+apc1.record(apvector)
+apc1.thresh=-40
+midsoma.sec apc2 = new APCount(.5) // display purposes only, not same as apc1
+aplist.append(apc2)
+
+//x/open("raster.tem")  	// raster template
+
+//rplot = new RasterPlot(aplist,tstop)
+//graphList[0].append(rplot)
+
+
+// Initialize spike times
+
+
+
+objref somatrace_i, somatrace_v
+
+soma{
+//	insert extracellular
+}
+
+somatrace_i = new Vector(20100) 
+somatrace_i.record(&soma.i_membrane(0.5)) 
+somatrace_v = new Vector(20100) 
+somatrace_v.record(&soma.v(0.5))	

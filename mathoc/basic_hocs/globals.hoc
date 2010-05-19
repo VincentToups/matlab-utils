@@ -1,0 +1,42 @@
+objref rnd
+rnd= new Random(1)
+
+objref ranphas
+ranphas = new Random(809)
+
+
+objref rplot, aplist, apvector, apc1, apc2
+
+//----------------------------------------------------------------------------
+//  load and define general graphical procedures
+//----------------------------------------------------------------------------
+
+load_file("stdgui.hoc")
+//nrnmainmenu()
+//nrncontrolmenu()
+
+//----------------------------------------------------------------------------
+//  general parameters
+//----------------------------------------------------------------------------
+
+dt=0.1
+tstop = 1300
+runStopAt = tstop
+steps_per_ms = 10
+celsius = 36
+v_init = -60
+BgExcRate=1.3
+BgInhRate=5
+PiConst=3.1415926
+BkExcOmg=2*PiConst/100
+BkExcPhase=PiConst/2
+BkExcAmp=0.2
+BkInhOmg=2*PiConst/100
+BkInhPhase=PiConst/2
+BkInhAmp=0.2
+
+
+global_ra = 70		//Ohmcm		// 68 (stuart&spruston)
+
+EK=-80
+ENa=50

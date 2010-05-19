@@ -1,0 +1,59 @@
+begintemplate FileListTemplate
+    public file_list, generate, init, add_file, reset, set_file_list_from_file, clear_file_list, add_file
+	external String
+	objref file_list
+	strdef fname
+	file_number = 0
+
+	proc init(/*list*/) {
+		file_list = $o1
+		file_number = 0
+	}
+	
+	proc set_file_list_from_file(/*fn*/){ local i, n  localobj fpr
+		fpr = new File($s1)
+		n = fpr.scanvar()
+		file_list.remove_all()
+		for(i=0;i<n;i=i+1){
+			file_list.append( new String(fpr.scanstr()) )
+		}
+	}
+	
+	proc clear_file_list( ){
+		file_list.remove_all()
+	}
+	
+	proc add_file(/*s*/){
+		file_list.append(new String($s1))
+	}
+
+	proc generate(/*onsetters, &optional seed*/) { local i,j, spike, nspike, nsyn, nonsetters  localobj fpr, onsetters, onsetter
+		onsetters = $o1
+		nonsetters = onsetters.count()
+		fpr = new File(file_list.object(file_number).s)
+		file_number = (file_number + 1 ) % file_list.count()
+		fpr.ropen()
+		nsyn = fpr.scanvar()
+		if(nsyn != nonsetters) {
+			printf("*** Warning, nsyn (%d) != nonsetters (%d) for file %s", nsyn, nonsetters, file_list.object(file_number).s)
+		}
+		for(i=0;i<nsyn;i=i+1){
+			nspike = fpr.scanvar()
+			onsetter = onsetters.object(i)
+			onsetter.ntimes = 0
+			for(j=0;j<nspike;j=j+1){
+				spike = fpr.scanvar()
+				onsetter.onset(onsetter.ntimes) = spike
+//				printf("Added spike %f to onsetter %d\n",spike,i)
+				onsetter.ntimes = onsetter.ntimes + 1
+//				printf("onsetter.ntimes = %d\n", onsetter.ntimes)
+			}
+		}
+		fpr.close()
+	}
+	
+	proc reset( ){
+		file_number = 0
+	}
+
+endtemplate FileListTemplate

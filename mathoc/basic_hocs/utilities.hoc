@@ -1,0 +1,207 @@
+objref saverList, postSimList, preSimList
+
+saverList = new List()
+postSimList = new List()
+preSimList = new List()
+
+proc save() { local i, j, m
+	m = saverList.count()
+	for(i=0;i<m;i=i+1){
+		saverList.object(i).save()
+	}
+}
+
+proc postSim() { local i,j, m
+	m = postSimList.count()
+	for(i=0;i<m;i=i+1){
+		postSimList.object(i).postSim()
+	}
+}
+
+proc preSim() { local i,j, m
+//	printf("Running Pre sim jobs\n")
+	m = preSimList.count()
+	for(i=0;i<m;i=i+1){
+		preSimList.object(i).preSim()
+	}
+}
+
+/*
+
+(defun init_arglist_n (n)
+  (cond ((eq n 0)
+		 "_ = \"\"")
+		((eq n 1)
+		 "_ = $s1")
+		(t
+		 (let ((str "sprint(_,$1"))
+		   (loop for i from 2 to n do
+				(setq str (concat str (format ", $s%d" n))))
+		   (concat str ")")))))
+
+(init_arglist_n 0)
+
+
+begintemplate 
+endtemplate
+*/
+
+begintemplate LocalString 
+public _, s
+strdef _, s
+proc init(/*format &rest args*/) {
+	_ = $s1
+	s = $s1
+}
+
+endtemplate LocalString
+
+obfunc string_to_secref(/* */) { localobj secref, str, pushsec
+	str = new LocalString("")
+	pushsec = new SectionRef()
+	sprint(str.s, "access %s", $s1)
+	execute(str.s)
+	secref = new SectionRef()
+	access pushsec.sec()
+	return secref
+}
+
+begintemplate Utilities
+
+public re_subsection, assert, error, refdist, list, nilp, vector, nilstrp, dbprint, init, set_verbosity, strlist, nil
+
+objref secref1, secref2, push
+objref Sections
+objref Result
+objref pushsec
+objref strf
+objref ifile
+objref ofile
+objref nil
+strdef re
+strdef sn
+strdef tmpstr
+strdef evstr
+strdef tmpstr2
+objref templist
+objref tempvec
+strdef nilstr
+verbosity = 0
+
+
+strf = new StringFunctions()
+    proc init() {
+	    verbosity = 0
+	}
+
+    proc dbprint(/*str, &optional verbosity*/){ local inver
+		if(numarg()>=2){
+			inver = $2
+		} else {
+			inver = 5
+		}
+		if(inver<verbosity){
+			print $s1
+		}
+	}
+
+    func nilstrp(/*s*/) {
+		return !strcmp(nilstr,$s1)
+	}
+
+	proc re_subsection(/*Sections,regular_expr,Result*/){ local i,j,k,m,n
+		Sections = $o1
+		re = $s2
+		Result = $o3
+		ofile = new File()
+		ofile.mktemp()
+		ofile.getname(tmpstr)
+		ofile.wopen(tmpstr)
+		pushsec = new SectionRef()
+		for(i=0;i<Sections.count();i=i+1){
+			access Sections.object(i).sec()
+			ofile.printf("%s %d\n",secname(), i)
+		}
+		ofile.close()
+		ofile.unlink()
+		ifile = new File()
+		ifile.mktemp()
+		ifile.getname(tmpstr2)
+//		print tmpstr2
+		sprint(evstr,"grep %s %s > %s",re,tmpstr,tmpstr2)
+//		print evstr
+		system(evstr)
+		ifile.ropen(tmpstr2)
+		Result.remove_all()
+		while(!ifile.eof()){
+			ifile.scanstr(tmpstr)
+			i = ifile.scanvar()
+			Result.append(Sections.object(i))
+	    }
+		ifile.close()
+		ifile.unlink()
+	}
+	
+	func nilp(/*o*/){
+		return nil==$o1
+	}
+	
+	proc assert(/*case,string*/){
+		if(!$1){
+			print $s2
+			print 1/0
+		}
+	}
+	
+	proc error(/*string*/){
+		print $s1
+		print 1/0
+		
+	}
+	
+	obfunc list(/*items, all objects*/ ) { local n, i
+		templist = new List()
+		n = numarg()
+		for(i=1;i<=n;i=i+1){
+			templist.append($oi)
+		}
+		return templist
+	}
+	
+	obfunc strlist(/*items, all strings*/){ local n, i localobj lst
+		lst = new List()
+		n = numarg()
+		for(i=1;i<=n;i=i+1){
+			lst.append(new LocalString($si))
+		}
+		return lst
+	}
+	
+	obfunc vector(/*items, all numbers*/){local n, i
+		tempvec = new Vector()
+		n = numarg()
+		for(i=1;i<=n;i=i+1){
+			tempvec.append($i)
+		}
+		return tempvec
+	}
+	
+	func refdist(/*secref1,x1,secref2,x2*/) {
+		secref1 = $o1
+		x1 = $2
+		secref2 = $o3
+		x2 = $4
+		push = new SectionRef()
+		access secref1.sec
+		distance(0,x1)
+		access secref2.sec
+		d = distance(x2)
+		access push.sec
+		return d
+	}
+	
+endtemplate Utilities
+
+objref utils, utilities
+utils = new Utilities()
+utilities = utils

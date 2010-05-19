@@ -1,0 +1,56 @@
+objref masterRandom
+masterRandom = new Random(master_seed)
+
+apsynsE = new SynTypeKeeper()
+apsynsE.distribute_synapses_in_sections_prob(ne_ap/efficiency_factor, apicals, tau_e,e_e,g_e,new DistFromSomaLambda(apicalref.sec.L, apicalref.sec.L/30),masterRandom.normal(0,10000))
+
+apsynsI = new SynTypeKeeper()
+apsynsI.distribute_synapses_in_sections_prob(ne_ap/efficiency_factor, apicals, tau_i,e_i,g_i,new DistFromSomaLambda(apicalref.sec.L, apicalref.sec.L/30),masterRandom.normal(0,10000))
+
+bassynsE = new SynTypeKeeper()
+bassynsE.distribute_synapses_in_sections_prob(ne_bas/efficiency_factor,soma_and_basilars, tau_e,e_e,g_e,new DistFromSomaLambda(0,600),masterRandom.normal(0,10000))
+
+bassynsI = new SynTypeKeeper()
+bassynsI.distribute_synapses_in_sections_prob(ni_bas/efficiency_factor,soma_and_basilars,tau_i,e_i,g_i,new DistFromSomaLambda(0,30),masterRandom.normal(0,10000))
+
+// Patterns
+// Use oscillating patterns with zero amplitude
+
+objref apsynsE_times
+apsynsE_times = new OscillationTemplate("ratehz",rate_e_ap*efficiency_factor,"freqhz",apsynsE_osc_freq,"amp",apsynsE_osc_amp,"tstop",tstop)
+apsynsE.set_spike_template(apsynsE_times)
+
+objref apsynsI_times
+apsynsI_times = new OscillationTemplate("ratehz",rate_i_ap*efficiency_factor,"freqhz",apsynsI_osc_freq,"amp",apsynsI_osc_amp,"tstop",tstop)
+apsynsI.set_spike_template(apsynsI_times)
+
+objref bassynsE_times
+bassynsE_times = new OscillationTemplate("ratehz",rate_e_bas*efficiency_factor,"freqhz",bassynsE_osc_freq,"amp",bassynsE_osc_amp,"tstop",tstop)
+bassynsE.set_spike_template(bassynsE_times)
+
+objref bassynsI_times
+bassynsI_times = new OscillationTemplate("ratehz",rate_i_bas*efficiency_factor,"freqhz",bassynsI_osc_freq,"amp",bassynsI_osc_amp,"tstop",tstop)
+bassynsI.set_spike_template(bassynsI_times)
+
+xopen("./basic_hocs/SynResetPreSim.hoc")
+objref synapse_resetter
+synapse_resetter = new SynResetPreSim(1010)
+
+objref vtsaver
+vtsaver = new VoltageTraceSaver("a",0,.5,sections,trace_file)
+
+objref stsaver
+stsaver = new SpikeTrainSaver("a",0,.5,sections,spike_file)
+
+// F-F vary excitation rate
+for(repeat_i=0;repeat_i<nrepeat;repeat_i=repeat_i+1){
+	printf("Do presim")
+	preSim()
+	printf("Done prep\n")
+	run()
+	printf("Done sim\n")
+	save()
+	postSim()
+}
+
+printf("+++ Total time was %f and timestep was %f\n",tstop, dt)

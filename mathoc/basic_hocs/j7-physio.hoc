@@ -1,0 +1,86 @@
+// Physiology of the J7 cell. The soma contains a Ca-dependent K current to prevent bursting.
+// Author Jean-Marc Fellous, fellous@salk.edu
+
+
+v_init = -60
+global_ra = 100		//Ohmcm
+
+forall {
+	insert fastpas		// leak current
+	e_fastpas = -85	//
+	g_fastpas = 2.5e-5  		// 
+	cm=1.7			// increased to account for spines (Stuart & Spruston 1998)
+	Ra=global_ra
+}
+
+gpas_soma=3e-5		//34,000 Ohm/cm2	// (Stuart & Spruston 1998)
+
+
+
+
+forsec dendrites{
+
+	g_fastpas=27e-5
+	
+}
+
+forsec somas{
+	cm=1.3
+	g_fastpas=gpas_soma
+	Ra=1
+}
+
+forsec axons{
+	cm=1
+	g_fastpas=1e-5
+	Ra=10
+}
+
+
+
+forsec axons{
+	insert hh2pd
+	vtraub_hh2pd=-64
+	gnabar_hh2pd=.1
+	gkbar_hh2pd=.05
+	
+	
+}
+
+
+forsec somas{
+	
+	insert hh2pd
+	vtraub_hh2pd=-68
+	gnabar_hh2pd=.3
+	gkbar_hh2pd=.18
+	
+	insert im
+	gbar_im = 0.01
+	
+	insert iahp		// burst IAHP
+	cac_iahp = 0.025
+	beta_iahp = 0.03
+	taumin_iahp = 5
+	ek=EK
+	gkbar_iahp = 0.018	// 300ps/um2
+
+    insert ca    
+	gbar_ca = 0.4		// 1.6ps/um2
+
+	insert cad		// calcium pump
+	cainf_cad=0.005
+	caini=0.04
+	kd_cad = cainf_cad*4	//1e-4
+	kt_cad = 1e-4/4
+	depth_cad = .7  //1
+	taur_cad = 1e10
+    decay_cad=50     //.5 
+	
+	
+	
+	
+}
+
+
+

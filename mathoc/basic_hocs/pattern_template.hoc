@@ -1,0 +1,200 @@
+begintemplate PatternTemplate
+    public times, stds, relis, n, init, generate, add_spike, poisson_template, incr_relis, incr_stds, set_all_relis, write_out_template, set_all_stds
+    objref times, stds, relis, tempobj, onsetters, random, fileptr
+	strdef temp_name
+	
+	proc init(/*n,rest*/){ local i, j, k, base
+
+		n = $1
+		
+		times = new Vector()
+		stds = new Vector()
+		relis = new Vector()
+		
+		if(numarg()>1){
+			base = 2
+			while(base<=numarg()){
+				i = base
+				temp_name = $si
+				for(k=0;k<n;k=k+1){
+					base = base + 1
+					i = base
+					if(!strcmp(temp_name,"times")){
+						times.append($i)
+					} else if(!strcmp(temp_name,"stds")){
+						stds.append($i)
+					} else if(!strcmp(temp_name,"relis")){
+						relis.append($i)
+					} else {
+						printf("Warning: What I can't understand is why you would pass %s to the PatternTemplate constructor.\n",temp_name)
+					}
+				}
+				base = base + 1
+			}
+		}
+	}
+	
+	proc write_out_template(/*filename*/) { local i, j, k, m
+		temp_name = $s1
+		fileptr = new File()
+		fileptr.wopen(temp_name)
+		
+		for(i=0;i<n;i=i+1){
+			fileptr.printf("%f\t", times.get(i))
+		}
+		fileptr.printf("\n")
+		
+		for(i=0;i<n;i=i+1){
+			fileptr.printf("%f\t", relis.get(i))
+		}
+		fileptr.printf("\n")
+	
+		for(i=0;i<n;i=i+1){
+			fileptr.printf("%f\t", stds.get(i))
+		}
+		fileptr.printf("\n")
+		fileptr.close()
+	}
+	
+	proc set_all_relis(/*r*/){ local i, r
+		r = $1
+		for(i=0;i<n;i=i+1){
+			relis.set(i,r)
+		}
+	}
+	
+	proc set_all_stds(/*s*/){ local i, s
+		s = $1
+		for(i=0;i<n;i=i+1){
+			stds.set(i,s)
+		}
+	}
+	
+	
+	
+	proc add_spike(/*time,std,reli*/){ local time, std, reli
+		n = n + 1
+		time = $1
+		std = $2
+		reli = $3
+		times.append(time)
+		stds.append(std)
+		relis.append(reli)
+	}
+	
+	proc incr_relis(/*incr*/){ local i, r, incr
+		incr = $1
+		for(i=0;i<n;i=i+1){
+			r = relis.get(i)
+			r = r + incr
+			if(r>1){
+				r = 1 
+			}
+			if(r<0){
+				r = 0
+			}
+			relis.set(i,r)
+		}
+	}
+	
+	proc incr_stdss(/*incr*/){ local i, p, incr
+		incr = $1
+		for(i=0;i<n;i=i+1){
+			p = stds.get(i)
+			p = p + incr
+			if(p<0){
+				p = .01 
+			}
+			stds.set(i,p)
+		}
+	}
+	
+	proc poisson_template(/*rate,reli,reliv,std,stdv,tstop,seed*/){ local stdt,relit, i, j, k, m, seed, rate, reli, reliv, std, stdv, tstop, tt, done
+		if(numarg()>6){
+			seed = $7
+		} else {
+			seed = 1111
+		}
+		random = new Random(seed)
+		rate = $1
+		reli = $2
+		reliv= $3
+		std = $4
+		stdv= $5
+		tstop= $6
+		
+		if(n!=0){
+			times.remove(0,n-1)
+			relis.remove(0,n-1)
+			stds.remove(0,n-1)
+		    n = 0
+		}
+		
+		tt = -3*(1/rate)
+		while(tt<0){
+			tt = tt + random.negexp(1/rate)
+		}
+		
+		while(tt<tstop){
+			times.append(tt)
+			relit = random.normal(reli,reliv)
+			if(relit>1){
+				relit = 1
+			}
+			if(relit<0){
+				relit = 0
+			}
+			relis.append(relit)
+			stdt = random.normal(std,stdv)
+			if(stdt<0){
+				stdt = .01
+			}
+			stds.append(stdt)
+			n = n + 1
+			printf("\tspike @ %f r:%f p:%f \n",tt,relit,stdt)
+			tt = tt + random.negexp(1/rate)
+		}
+		printf("n = %d\n",n)
+		
+	}
+	
+	proc generate(/*onsetters,&optional seed*/){ local i, j, m, time, std, reli,seed, ntimes, ttime
+		onsetters = $o1
+		m = onsetters.count()
+		
+		if(numarg()>1){
+			seed = $2
+		} else {
+			seed = 1111
+		}
+		printf("In pattern generate with seed %f\n",seed)
+		random = new Random(seed)
+		
+		for(i=0;i<m;i=i+1){
+			onsetters.object(i).ntimes = 0
+			onsetters.object(i).index = 0
+		}
+			
+		for(j=0;j<n;j=j+1){
+			reli = relis.get(j)
+			//printf("reli is %f\n",reli)
+			std = stds.get(j)
+			time = times.get(j)
+			var =  std*std
+			for(i=0;i<m;i=i+1){
+				if(random.uniform(0,1)<reli){
+					//printf("made a spike at time %f\nfrom reli %f\n with var %f from std %f\n",time,reli,var, std)
+					ntimes = onsetters.object(i).ntimes
+                    ttime = random.normal(time,var)
+                    if(ttime<0){
+                        ttime = .1
+                    }
+					onsetters.object(i).onset[ntimes] = ttime
+					onsetters.object(i).ntimes = ntimes + 1
+				}
+			}
+		}
+
+	}
+	
+endtemplate PatternTemplate

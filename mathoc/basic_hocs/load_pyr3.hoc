@@ -1,0 +1,280 @@
+xopen("./basic_hocs/pyr3_template.hoc")
+
+objref pyr3inst
+pyr3inst = new pyr3(-1)
+
+objref apicals 
+apicals = new List()
+pyr3inst.comp[49] { apicals.append(new SectionRef()) }
+pyr3inst.comp[50] { apicals.append(new SectionRef()) }
+pyr3inst.comp[51] { apicals.append(new SectionRef()) }
+pyr3inst.comp[52] { apicals.append(new SectionRef()) }
+pyr3inst.comp[57] { apicals.append(new SectionRef()) }
+pyr3inst.comp[58] { apicals.append(new SectionRef()) }
+pyr3inst.comp[59] { apicals.append(new SectionRef()) }
+pyr3inst.comp[60] { apicals.append(new SectionRef()) }
+pyr3inst.comp[65] { apicals.append(new SectionRef()) }
+pyr3inst.comp[66] { apicals.append(new SectionRef()) }
+pyr3inst.comp[67] { apicals.append(new SectionRef()) }
+pyr3inst.comp[68] { apicals.append(new SectionRef()) }
+pyr3inst.comp[45] { apicals.append(new SectionRef()) }
+pyr3inst.comp[46] { apicals.append(new SectionRef()) }
+pyr3inst.comp[47] { apicals.append(new SectionRef()) }
+pyr3inst.comp[48] { apicals.append(new SectionRef()) }
+pyr3inst.comp[53] { apicals.append(new SectionRef()) }
+pyr3inst.comp[54] { apicals.append(new SectionRef()) }
+pyr3inst.comp[55] { apicals.append(new SectionRef()) }
+pyr3inst.comp[56] { apicals.append(new SectionRef()) }
+pyr3inst.comp[61] { apicals.append(new SectionRef()) }
+pyr3inst.comp[62] { apicals.append(new SectionRef()) }
+pyr3inst.comp[63] { apicals.append(new SectionRef()) }
+pyr3inst.comp[64] { apicals.append(new SectionRef()) }
+
+objref basals 
+basals = new List()
+pyr3inst.comp[06] { basals.append(new SectionRef()) }
+pyr3inst.comp[07] { basals.append(new SectionRef()) }
+pyr3inst.comp[08] { basals.append(new SectionRef()) }
+pyr3inst.comp[09] { basals.append(new SectionRef()) }
+pyr3inst.comp[18] { basals.append(new SectionRef()) }
+pyr3inst.comp[19] { basals.append(new SectionRef()) }
+pyr3inst.comp[20] { basals.append(new SectionRef()) }
+pyr3inst.comp[21] { basals.append(new SectionRef()) }
+pyr3inst.comp[30] { basals.append(new SectionRef()) }
+pyr3inst.comp[31] { basals.append(new SectionRef()) }
+pyr3inst.comp[32] { basals.append(new SectionRef()) }
+pyr3inst.comp[33] { basals.append(new SectionRef()) }
+pyr3inst.comp[02] { basals.append(new SectionRef()) }
+pyr3inst.comp[03] { basals.append(new SectionRef()) }
+pyr3inst.comp[04] { basals.append(new SectionRef()) }
+pyr3inst.comp[05] { basals.append(new SectionRef()) }
+pyr3inst.comp[14] { basals.append(new SectionRef()) }
+pyr3inst.comp[15] { basals.append(new SectionRef()) }
+pyr3inst.comp[16] { basals.append(new SectionRef()) }
+pyr3inst.comp[17] { basals.append(new SectionRef()) }
+pyr3inst.comp[26] { basals.append(new SectionRef()) }
+pyr3inst.comp[27] { basals.append(new SectionRef()) }
+pyr3inst.comp[28] { basals.append(new SectionRef()) }
+pyr3inst.comp[29] { basals.append(new SectionRef()) }
+
+objref obliques
+obliques = new List()
+pyr3inst.comp[12] { obliques.append(new SectionRef()) }
+pyr3inst.comp[13] { obliques.append(new SectionRef()) }
+pyr3inst.comp[24] { obliques.append(new SectionRef()) }
+pyr3inst.comp[25] { obliques.append(new SectionRef()) }
+pyr3inst.comp[36] { obliques.append(new SectionRef()) }
+pyr3inst.comp[37] { obliques.append(new SectionRef()) }
+pyr3inst.comp[10] { obliques.append(new SectionRef()) }
+pyr3inst.comp[11] { obliques.append(new SectionRef()) }
+pyr3inst.comp[22] { obliques.append(new SectionRef()) }
+pyr3inst.comp[23] { obliques.append(new SectionRef()) }
+pyr3inst.comp[34] { obliques.append(new SectionRef()) }
+pyr3inst.comp[35] { obliques.append(new SectionRef()) }
+
+objref trunks
+trunks = new List()
+pyr3inst.comp[40] { trunks.append(new SectionRef()) }
+pyr3inst.comp[39] { trunks.append(new SectionRef()) }
+pyr3inst.comp[38] { trunks.append(new SectionRef()) }
+
+objref somaref
+pyr3inst.comp[1] { somaref = new SectionRef() }
+
+objref all
+all = new List()
+
+pyr3inst.comp[01] { all.append(new SectionRef()) }
+pyr3inst.comp[02] { all.append(new SectionRef()) }
+pyr3inst.comp[03] { all.append(new SectionRef()) }
+pyr3inst.comp[04] { all.append(new SectionRef()) }
+pyr3inst.comp[05] { all.append(new SectionRef()) }
+pyr3inst.comp[06] { all.append(new SectionRef()) }
+pyr3inst.comp[07] { all.append(new SectionRef()) }
+pyr3inst.comp[08] { all.append(new SectionRef()) }
+pyr3inst.comp[09] { all.append(new SectionRef()) }
+pyr3inst.comp[10] { all.append(new SectionRef()) }
+pyr3inst.comp[11] { all.append(new SectionRef()) }
+pyr3inst.comp[12] { all.append(new SectionRef()) }
+pyr3inst.comp[13] { all.append(new SectionRef()) }
+pyr3inst.comp[14] { all.append(new SectionRef()) }
+pyr3inst.comp[15] { all.append(new SectionRef()) }
+pyr3inst.comp[16] { all.append(new SectionRef()) }
+pyr3inst.comp[17] { all.append(new SectionRef()) }
+pyr3inst.comp[18] { all.append(new SectionRef()) }
+pyr3inst.comp[19] { all.append(new SectionRef()) }
+pyr3inst.comp[20] { all.append(new SectionRef()) }
+pyr3inst.comp[21] { all.append(new SectionRef()) }
+pyr3inst.comp[22] { all.append(new SectionRef()) }
+pyr3inst.comp[23] { all.append(new SectionRef()) }
+pyr3inst.comp[24] { all.append(new SectionRef()) }
+pyr3inst.comp[25] { all.append(new SectionRef()) }
+pyr3inst.comp[26] { all.append(new SectionRef()) }
+pyr3inst.comp[27] { all.append(new SectionRef()) }
+pyr3inst.comp[28] { all.append(new SectionRef()) }
+pyr3inst.comp[29] { all.append(new SectionRef()) }
+pyr3inst.comp[30] { all.append(new SectionRef()) }
+pyr3inst.comp[31] { all.append(new SectionRef()) }
+pyr3inst.comp[32] { all.append(new SectionRef()) }
+pyr3inst.comp[33] { all.append(new SectionRef()) }
+pyr3inst.comp[34] { all.append(new SectionRef()) }
+pyr3inst.comp[35] { all.append(new SectionRef()) }
+pyr3inst.comp[36] { all.append(new SectionRef()) }
+pyr3inst.comp[37] { all.append(new SectionRef()) }
+pyr3inst.comp[38] { all.append(new SectionRef()) }
+pyr3inst.comp[39] { all.append(new SectionRef()) }
+pyr3inst.comp[40] { all.append(new SectionRef()) }
+pyr3inst.comp[45] { all.append(new SectionRef()) }
+pyr3inst.comp[46] { all.append(new SectionRef()) }
+pyr3inst.comp[47] { all.append(new SectionRef()) }
+pyr3inst.comp[48] { all.append(new SectionRef()) }
+pyr3inst.comp[49] { all.append(new SectionRef()) }
+pyr3inst.comp[50] { all.append(new SectionRef()) }
+pyr3inst.comp[51] { all.append(new SectionRef()) }
+pyr3inst.comp[52] { all.append(new SectionRef()) }
+pyr3inst.comp[53] { all.append(new SectionRef()) }
+pyr3inst.comp[54] { all.append(new SectionRef()) }
+pyr3inst.comp[55] { all.append(new SectionRef()) }
+pyr3inst.comp[56] { all.append(new SectionRef()) }
+pyr3inst.comp[57] { all.append(new SectionRef()) }
+pyr3inst.comp[58] { all.append(new SectionRef()) }
+pyr3inst.comp[59] { all.append(new SectionRef()) }
+pyr3inst.comp[60] { all.append(new SectionRef()) }
+pyr3inst.comp[61] { all.append(new SectionRef()) }
+pyr3inst.comp[62] { all.append(new SectionRef()) }
+pyr3inst.comp[63] { all.append(new SectionRef()) }
+pyr3inst.comp[64] { all.append(new SectionRef()) }
+pyr3inst.comp[65] { all.append(new SectionRef()) }
+pyr3inst.comp[66] { all.append(new SectionRef()) }
+pyr3inst.comp[67] { all.append(new SectionRef()) }
+pyr3inst.comp[68] { all.append(new SectionRef()) }
+
+
+objref comp01ref 
+pyr3inst.comp[01] { comp01ref = new SectionRef() }
+objref comp02ref 
+pyr3inst.comp[02] { comp02ref = new SectionRef() }
+objref comp03ref 
+pyr3inst.comp[03] { comp03ref = new SectionRef() }
+objref comp04ref 
+pyr3inst.comp[04] { comp04ref = new SectionRef() }
+objref comp05ref 
+pyr3inst.comp[05] { comp05ref = new SectionRef() }
+objref comp06ref 
+pyr3inst.comp[06] { comp06ref = new SectionRef() }
+objref comp07ref 
+pyr3inst.comp[07] { comp07ref = new SectionRef() }
+objref comp08ref 
+pyr3inst.comp[08] { comp08ref = new SectionRef() }
+objref comp09ref 
+pyr3inst.comp[09] { comp09ref = new SectionRef() }
+objref comp10ref 
+pyr3inst.comp[10] { comp10ref = new SectionRef() }
+objref comp11ref 
+pyr3inst.comp[11] { comp11ref = new SectionRef() }
+objref comp12ref 
+pyr3inst.comp[12] { comp12ref = new SectionRef() }
+objref comp13ref 
+pyr3inst.comp[13] { comp13ref = new SectionRef() }
+objref comp14ref 
+pyr3inst.comp[14] { comp14ref = new SectionRef() }
+objref comp15ref 
+pyr3inst.comp[15] { comp15ref = new SectionRef() }
+objref comp16ref 
+pyr3inst.comp[16] { comp16ref = new SectionRef() }
+objref comp17ref 
+pyr3inst.comp[17] { comp17ref = new SectionRef() }
+objref comp18ref 
+pyr3inst.comp[18] { comp18ref = new SectionRef() }
+objref comp19ref 
+pyr3inst.comp[19] { comp19ref = new SectionRef() }
+objref comp20ref 
+pyr3inst.comp[20] { comp20ref = new SectionRef() }
+objref comp21ref 
+pyr3inst.comp[21] { comp21ref = new SectionRef() }
+objref comp22ref 
+pyr3inst.comp[22] { comp22ref = new SectionRef() }
+objref comp23ref 
+pyr3inst.comp[23] { comp23ref = new SectionRef() }
+objref comp24ref 
+pyr3inst.comp[24] { comp24ref = new SectionRef() }
+objref comp25ref 
+pyr3inst.comp[25] { comp25ref = new SectionRef() }
+objref comp26ref 
+pyr3inst.comp[26] { comp26ref = new SectionRef() }
+objref comp27ref 
+pyr3inst.comp[27] { comp27ref = new SectionRef() }
+objref comp28ref 
+pyr3inst.comp[28] { comp28ref = new SectionRef() }
+objref comp29ref 
+pyr3inst.comp[29] { comp29ref = new SectionRef() }
+objref comp30ref 
+pyr3inst.comp[30] { comp30ref = new SectionRef() }
+objref comp31ref 
+pyr3inst.comp[31] { comp31ref = new SectionRef() }
+objref comp32ref 
+pyr3inst.comp[32] { comp32ref = new SectionRef() }
+objref comp33ref 
+pyr3inst.comp[33] { comp33ref = new SectionRef() }
+objref comp34ref 
+pyr3inst.comp[34] { comp34ref = new SectionRef() }
+objref comp35ref 
+pyr3inst.comp[35] { comp35ref = new SectionRef() }
+objref comp36ref 
+pyr3inst.comp[36] { comp36ref = new SectionRef() }
+objref comp37ref 
+pyr3inst.comp[37] { comp37ref = new SectionRef() }
+objref comp38ref 
+pyr3inst.comp[38] { comp38ref = new SectionRef() }
+objref comp39ref 
+pyr3inst.comp[39] { comp39ref = new SectionRef() }
+objref comp40ref 
+pyr3inst.comp[40] { comp40ref = new SectionRef() }
+objref comp45ref 
+pyr3inst.comp[45] { comp45ref = new SectionRef() }
+objref comp46ref 
+pyr3inst.comp[46] { comp46ref = new SectionRef() }
+objref comp47ref 
+pyr3inst.comp[47] { comp47ref = new SectionRef() }
+objref comp48ref 
+pyr3inst.comp[48] { comp48ref = new SectionRef() }
+objref comp49ref 
+pyr3inst.comp[49] { comp49ref = new SectionRef() }
+objref comp50ref 
+pyr3inst.comp[50] { comp50ref = new SectionRef() }
+objref comp51ref 
+pyr3inst.comp[51] { comp51ref = new SectionRef() }
+objref comp52ref 
+pyr3inst.comp[52] { comp52ref = new SectionRef() }
+objref comp53ref 
+pyr3inst.comp[53] { comp53ref = new SectionRef() }
+objref comp54ref 
+pyr3inst.comp[54] { comp54ref = new SectionRef() }
+objref comp55ref 
+pyr3inst.comp[55] { comp55ref = new SectionRef() }
+objref comp56ref 
+pyr3inst.comp[56] { comp56ref = new SectionRef() }
+objref comp57ref 
+pyr3inst.comp[57] { comp57ref = new SectionRef() }
+objref comp58ref 
+pyr3inst.comp[58] { comp58ref = new SectionRef() }
+objref comp59ref 
+pyr3inst.comp[59] { comp59ref = new SectionRef() }
+objref comp60ref 
+pyr3inst.comp[60] { comp60ref = new SectionRef() }
+objref comp61ref 
+pyr3inst.comp[61] { comp61ref = new SectionRef() }
+objref comp62ref 
+pyr3inst.comp[62] { comp62ref = new SectionRef() }
+objref comp63ref 
+pyr3inst.comp[63] { comp63ref = new SectionRef() }
+objref comp64ref 
+pyr3inst.comp[64] { comp64ref = new SectionRef() }
+objref comp65ref 
+pyr3inst.comp[65] { comp65ref = new SectionRef() }
+objref comp66ref 
+pyr3inst.comp[66] { comp66ref = new SectionRef() }
+objref comp67ref 
+pyr3inst.comp[67] { comp67ref = new SectionRef() }
+objref comp68ref 
+pyr3inst.comp[68] { comp68ref = new SectionRef() }

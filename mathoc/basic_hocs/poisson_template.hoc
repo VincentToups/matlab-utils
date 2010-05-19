@@ -1,0 +1,44 @@
+begintemplate PoissonTemplate
+
+    public rate, init, generate, tstop, random, onsetters, write_out_template
+    objref tempobj, random, onsetters
+	strdef filename
+	
+	proc init(/*rate,tstop*/){
+		rate = $1
+		tstop = $2
+    }
+	
+	proc generate(/*onsetters &optional seed*/){ local seed, i, j, k, l, m, tt
+		printf("SUPDDD\n")
+		onsetters = $o1
+		seed = 1212
+		if(numarg()>1){
+			seed = $2
+		}
+		n = onsetters.count()
+		random = new Random(seed)
+		for(i=0;i<n;i=i+1){
+			printf("SUP DOG\n")
+			tt = -3.0*(1/rate)
+			tempobj = onsetters.object(i)
+			tempobj.ntimes = 0
+			while(tt<tstop && tempobj.ntimes < 200){
+				tt = tt + random.negexp(1/rate)
+				if(tt>0){
+					tempobj.onset[tempobj.ntimes] = tt
+					tempobj.ntimes = tempobj.ntimes + 1
+			    }
+			}
+		}
+	}
+	
+	proc write_out_template(/*filename*/) {
+		filename = $s1
+		tempobj = new File()
+		tempobj.wopen(filename)
+		tempobj.printf("%f %f\n",rate, tstop)
+		tempobj.close()
+	}
+	
+endtemplate PoissonTemplate

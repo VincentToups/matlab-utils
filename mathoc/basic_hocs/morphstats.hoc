@@ -1,0 +1,286 @@
+
+
+
+/* Compute morphological statistics of a reconstructed cell, with section definitions
+somas
+basal
+trunkbasal
+dendrites
+trunk
+tuft
+axons
+aptuft
+midsoma
+perisomatic
+
+JVT - for synapse placement
+*/
+/*
+begintemplate MyString
+public string
+strdef string
+proc init(){
+	string = $s1
+}
+endtemplate MyString
+*/
+objref AllSecInfo
+
+n=0
+forall {n=n+1}			// counts how many sections are present
+objref AllSecNames[n]	// creates the list of section names
+n=0
+forall {
+	AllSecNames[n]=new MyString(secname())
+	n=n+1
+}
+AllSecInfo=new SectionInfo(n)	// creates a AllSecInfo structure to store information about each section
+
+
+
+// Returns the absolute index (in AllSecInfo) of a particular section given by its name
+// $s1 = name of the section
+func findsec(){
+	n=0
+	forall{
+		if (strcmp($s1,AllSecNames[n].string)==0){
+		return n
+		}
+		n=n+1
+	}
+	return -1
+}
+
+
+
+
+//------------------------------------------------------------------
+// Compute some statistics (areas, lengths).
+
+TotalSec=0
+TotalSegs=0
+
+// soma
+
+somaarea=0
+somaarea1=0
+Nsoma=0
+forsec somas{
+	for(i=0;i<nseg;i=i+1){
+		somaarea=somaarea+area(i/nseg + 1/(2*nseg))
+	}
+	somaarea1=somaarea1+PI*diam*L
+	Nsoma=Nsoma+1
+	TotalSegs=TotalSegs+nseg
+}
+
+TotalSec=TotalSec+Nsoma
+
+// basal
+
+basalarea=0
+basalarea1=0
+Nbasal=0
+forsec basal{
+	for(i=0;i<nseg;i=i+1){
+		basalarea=basalarea+area(i/nseg + 1/(2*nseg))
+	}
+	basalarea1=basalarea1+PI*diam*L
+	Nbasal=Nbasal+1
+}
+
+
+// basal trunk
+
+trunkbasalarea=0
+trunkbasalarea1=0
+Ntrunkbasal=0
+forsec trunkbasal{
+	for(i=0;i<nseg;i=i+1){
+		trunkbasalarea=trunkbasalarea+area(i/nseg + 1/(2*nseg))
+	}
+	trunkbasalarea1=trunkbasalarea1+PI*diam*L
+	Ntrunkbasal=Ntrunkbasal+1
+}
+
+
+// Dendrites
+
+dendarea=0
+dendarea1=0
+Ndend=0
+
+forsec dendrites{
+	for(i=0;i<nseg;i=i+1){
+		dendarea=dendarea+area(i/nseg + 1/(2*nseg))
+	}
+	dendarea1=dendarea1+PI*diam*L
+	TotalSegs=TotalSegs+nseg
+	Ndend=Ndend+1
+}
+
+objref dendMap
+dendMap=new Vector(Ndend)
+i=0
+forsec dendrites{
+	dendMap.x[i]=findsec(secname())
+	i=i+1
+}
+
+TotalSec=TotalSec+Ndend
+
+// Trunk
+
+trunkarea=0
+trunkarea1=0
+Ntrunk=0
+forsec trunk{
+	for(i=0;i<nseg;i=i+1){
+		trunkarea=trunkarea+area(i/nseg + 1/(2*nseg))
+	}
+	trunkarea1=trunkarea1+PI*diam*L
+	Ntrunk=Ntrunk+1
+}
+
+//tuft
+
+tuftarea=0
+tuftarea1=0
+Ntuft=0
+forsec tuft{
+	for(i=0;i<nseg;i=i+1){
+		tuftarea=tuftarea+area(i/nseg + 1/(2*nseg))
+	}
+	tuftarea1=tuftarea1+PI*diam*L
+	Ntuft=Ntuft+1
+}
+
+
+// perisomatic
+perisomaticarea=0
+perisomaticarea1=0
+Nperisomatic=0
+forsec perisomatic{
+	for(i=0;i<nseg;i=i+1){
+		perisomaticarea=perisomaticarea+area(i/nseg + 1/(2*nseg))
+	}
+	perisomaticarea1=perisomaticarea1+PI*diam*L
+	Nperisomatic=Nperisomatic+1
+}
+
+objref perisomaticMap
+perisomaticMap=new Vector(Nperisomatic)
+i=0
+forsec perisomatic{
+	perisomaticMap.x[i]=findsec(secname())
+	i=i+1
+}
+
+
+
+// Axon 
+axonarea=0
+axonarea1=0
+Naxon=0
+forsec axons{
+	for(i=0;i<nseg;i=i+1){
+		axonarea=axonarea+area(i/nseg + 1/(2*nseg))
+	}
+	axonarea1=axonarea1+PI*diam*L
+	Naxon=Naxon+1
+	TotalSegs=TotalSegs+nseg
+}
+
+
+TotalSec=TotalSec+Naxon
+
+
+
+// Distances
+
+tuftdist=0
+i=0
+forsec aptuft{
+	tuftdist=tuftdist+distance(1)
+	i=i+1
+}
+if(i!=0){
+	tuftdist=tuftdist/i
+}
+
+
+axonlength=0
+i=0
+forsec axons{
+axonlength=axonlength+L
+i=i+1
+}
+
+dend1area=0
+dend1area1=0
+Ndend1=0
+
+forsec dend1{
+	for(i=0;i<nseg;i=i+1){
+		dend1area=dend1area+area(i/nseg + 1/(2*nseg))
+	}
+	dend1area1=dend1area1+PI*diam*L
+	Ndend1=Ndend1+1
+}
+
+objref dendMap1
+dendMap1=new Vector(Ndend1)
+i=0
+forsec dend1{
+	dendMap1.x[i]=findsec(secname())
+	i=i+1
+}
+
+dend2area=0
+dend2area1=0
+Ndend2=0
+
+forsec dend2{
+	for(i=0;i<nseg;i=i+1){
+		dend2area=dend2area+area(i/nseg + 1/(2*nseg))
+	}
+	dend2area1=dend2area1+PI*diam*L
+	Ndend2=Ndend2+1
+}
+
+objref dendMap2
+dendMap2=new Vector(Ndend2)
+i=0
+forsec dend2{
+	dendMap2.x[i]=findsec(secname())
+	i=i+1
+}
+
+// Prints the statistics
+proc printstats(){
+
+	print "Soma area: ",somaarea,"um2 __  ",Nsoma," Sections"
+	print "Basal area: ",basalarea,"um2 __  ",Nbasal," Sections"
+	print "Dendrites off the trunk area: ",trunkbasalarea,"um2 __  ",Ntrunkbasal," Sections"
+	print "Total dendrites area: ",dendarea,"um2 __  ",Ndend," Sections"
+	print "Trunk area: ",trunkarea,"um2 __  ",Ntrunk," Sections"
+	print "Tuft area: ",tuftarea,"um2 __  ",Ntuft," Sections"
+	print "Perisomatic area: ",perisomaticarea,"um2 __  ",Nperisomatic," Sections"
+	print "Axon area: ",axonarea,"um2 __  ",Naxon," Sections"
+	print "Total Number of Sections: ",TotalSec
+	print "Total Number of Segments: ",TotalSegs
+	print "Distance from soma to tuft: ",tuftdist,"um"
+	print "Total Axon length: ",axonlength,"um"
+
+}
+
+
+// Initializes the AllSecInfo list
+proc CreateSecInfo(){
+	n=0
+	forall {
+		AllSecInfo.Area.x[n]=PI*diam*L
+		n=n+1
+	}
+}
+

@@ -1,0 +1,24 @@
+begintemplate DistFromSomaLambda 
+  public alpha, call, center, dist_from_soma
+  objref secref
+  external somaref
+  external utils
+  proc init(){
+	  center = $1
+	  alpha = $2
+
+  }
+  func call(){ local pos, prob, val, dist
+	  secref = $o1
+	  pos = $2
+	  dist =  utils.refdist(somaref,.5,secref,pos)
+	  return exp( -(dist-center)^2/(alpha^2) )
+  }
+
+  func dist_from_soma(){ local pos, prob, val, dist
+	  secref = $o1
+	  pos = $2
+	  return utils.refdist(somaref,.5,secref,pos)
+  }
+
+endtemplate DistFromSomaLambda

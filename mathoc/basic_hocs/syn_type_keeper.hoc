@@ -1,0 +1,454 @@
+objref __gSynTypeKeepers
+__gSynTypeKeepers = new List()
+
+begintemplate SynTypeKeeper
+    public distribute_synapses_in_sections_prob, temp_name, NetConList, SynList, SmartStimList, WVec, load_synapses, init, load_spike_times, set_spike_times_osc, save_spike_times, load_spike_times_from_template, pattern_template, set_spike_template, set_spikes_from_template, set_all_ws, spike_template, save_spike_times_for_matlab, set_all_taus, set_all_es, distribute_synapses_in_sections, preSim
+    external __gSynTypeKeepers, utilities, utils
+	
+    strdef temp_name
+    strdef tmptemp_name
+    strdef filetemp_name
+	strdef section_str
+	strdef execute_str
+    objref SynList
+    objref SmartStimList
+    objref NetConList
+    objref WVec
+    objref myfile
+    objref tempobj
+    objref pushsec
+    objref Sections
+	objref synrnd
+	objref ofile
+	objref random
+	objref spike_template
+	objref areas
+	objref probs
+	objref sumprobs
+	objref this
+	objref callable
+	strdef auto_output_file
+	strdef tempout
+	auto_output_count = 0
+    
+    proc init() {
+		__gSynTypeKeepers.append(this)
+        temp_name = "deprecated"
+        SynList = new List()
+        NetConList = new List()
+        WVec = new Vector()
+        SmartStimList = new List()
+		auto_output_count = 0
+		if (numarg()>0) {
+			auto_output_file = $s1
+		}
+    }
+    
+	proc preSim() {
+		
+	}
+	
+	proc set_auto_output_file(/*newname*/){
+		auto_output_file = $s1	
+	}
+	
+	proc set_all_ws(/*w*/){ local w, i, j, m, n
+		w = $1
+		m = NetConList.count()
+		for(i=0;i<m;i=i+1){
+			NetConList.object(i).weight = w
+		}
+	}
+	
+	proc set_all_taus(/*tau*/){ local tau, i, j, m, n
+		tau = $1
+		m = SmartStimList.count()
+		for(i=0;i<m;i=i+1){
+			SmartStimList.object(i).tau = tau
+		}
+	}
+	
+	proc set_all_es(/*e*/){ local e, i, j, m, n
+		e = $1
+		m = SmartStimList.count()
+		for(i=0;i<m;i=i+1){
+			SmartStimList.object(i).e = e
+		}
+	}
+	
+	proc distribute_synapses_in_sections_prob(/*nsyn,SectionsList, tau, e, w, callable &optional seed*/) {local i,j,nsyn, norm, total, ttemp, seed, cast, found, tau, e, w, foundind, location
+		// callable is an object instance with a call method taking two arguments, the section and the position
+		// and returning a probability, which is the likelihood of having a synapses there.
+		nsyn = $1
+		Sections = $o2
+		tau = $3
+		e = $4
+		w = $5
+		callable = $o6
+		
+		//printf("OK OOOOO")
+		
+		if(numarg()>6){
+			seed = $7
+		} else {
+			seed = 1212
+		}
+		//find total area
+		pushsec = new SectionRef()
+		total = 0
+		areas = new Vector()
+		for(i=0;i<Sections.count();i=i+1){
+			//printf("OK1")
+			access Sections.object(i).sec()
+			ttemp = L*PI*diam
+			total = total + ttemp
+			areas.append(ttemp)
+		}
+		probs = new Vector()
+		for(i=0;i<Sections.count();i=i+1){
+			probs.append(areas.get(i)/total)
+		}
+		sumprobs = new Vector()
+		sumprobs.append(0)
+		i=0
+		//printf("\nprobs.size = %d\n", probs.size())
+		for(i=0;i<probs.size();i=i+1){
+			//printf("\nprobs.size = %d\n", probs.size())
+			sumprobs.append( sumprobs.get(sumprobs.size()-1) + probs.get(i) )
+		}
+		random = new Random(seed)
+		SynList.remove_all()
+		SmartStimList.remove_all()
+		NetConList.remove_all()
+		WVec.resize(0)
+		i = 0
+		//printf("\nBefore loop\n")
+		while(i<nsyn){
+			cast = random.uniform(0,1)
+		    found = 0
+			j = 0
+			while(!found && j < sumprobs.size()-1 ){
+				//printf("HEre at %d",j)
+				if( cast > sumprobs.get(j) && cast < sumprobs.get(j+1) ){
+					foundind = j
+					found = 1
+				} else {
+					j = j + 1
+				}
+		    }
+			if(!found){
+				foundind = j
+			}
+			location = random.uniform(0,1)
+			prob_here = callable.call(Sections.object(foundind),location)
+			cast = random.uniform(0,1)
+			//printf("cast: %f\n prob_here: %f\ndist: %f\n", cast, prob_here, location )
+			if(cast <= prob_here) {
+				//printf("synapse %d inserted at %f\n",i,callable.dist_from_soma(Sections.object(foundind),location))
+				
+				access Sections.object(foundind).sec()
+				tempobj = new ExpSyn(location)
+				tempobj.tau = tau
+				tempobj.e = e
+				SynList.append(tempobj)
+				WVec.append(w)
+				tempobj = new SmartStim()
+				tempobj.ntimes = 0
+				SmartStimList.append(tempobj)
+				tempobj = new NetCon(tempobj,SynList.object(SynList.count()-1))
+				tempobj.weight = w
+				NetConList.append(tempobj)			
+				i = i + 1
+			}
+		}
+		//Restore Section
+		access pushsec.sec()
+	}
+	
+	proc distribute_synapses_in_sections(/*nsyn,SectionsList, tau, e, w &optional seed*/) { local i,j,nsyn, norm, total, ttemp, seed, cast, found, tau, e, w, foundind, location
+		nsyn = $1
+		Sections = $o2
+		tau = $3
+		e = $4
+		w = $5
+		if(numarg()>5){
+			seed = $6
+		} else {
+			seed = 1212
+		}
+		//find total area
+		pushsec = new SectionRef()
+		total = 0
+		areas = new Vector()
+		for(i=0;i<Sections.count();i=i+1){
+			access Sections.object(i).sec()
+			ttemp = L*PI*diam
+			total = total + ttemp
+			areas.append(ttemp)
+		}
+		probs = new Vector()
+		for(i=0;i<Sections.count();i=i+1){
+			probs.append(areas.get(i)/total)
+		}
+		sumprobs = new Vector()
+		sumprobs.append(0)
+		for(i=0;i<probs.size();i=i+1){
+			sumprobs.append( sumprobs.get(sumprobs.size()-1) + probs.get(i) )
+		}
+		random = new Random(seed)
+		SynList.remove_all()
+		SmartStimList.remove_all()
+		NetConList.remove_all()
+		WVec.resize(0)
+		for(i=0;i<nsyn;i=i+1){
+			cast = random.uniform(0,1)
+		    found = 0
+			j = 0
+			while(!found && j < sumprobs.size()-1 ){
+				if( cast > sumprobs.get(j) && cast < sumprobs.get(j+1) ){
+					foundind = j
+					found = 1
+				} else {
+					j = j + 1
+				}
+		    }
+			if(!found){
+				foundind = j
+			}
+			access Sections.object(foundind).sec()
+			location = random.uniform(0,1)
+            tempobj = new ExpSyn(location)
+            tempobj.tau = tau
+            tempobj.e = e
+            SynList.append(tempobj)
+            WVec.append(w)
+            tempobj = new SmartStim()
+            tempobj.ntimes = 0
+            SmartStimList.append(tempobj)
+            tempobj = new NetCon(tempobj,SynList.object(SynList.count()-1))
+            tempobj.weight = w
+            NetConList.append(tempobj)			
+		}
+		//Restore Section
+		access pushsec.sec()
+	}
+	
+	proc save_synapses_named(/*filename_str,SectionList*/) { local i, j, nsyn  localobj fpr, section_list 
+		//strdef filename_str = $s1
+		nsyn = SmartStimList.count()
+		section_list = $o2
+		fpr = new File(filename_str)
+		fpr.ropen()
+		fpr.printf("%d\ndummy_name\n",nsyn)
+		for(i=0;i<n;i=i+1){
+			loc = SmartStimList.object(i).postloc()
+			fpr.printf("%s %f %f %f %f %f\n", secname(),  loc,  SynList.o(i).tau,  SynList.o(i).e,  WVec.get(i))
+			pop_section()
+		}
+	}
+	
+	proc load_synapses_named(/*filetemp_name*/) { local i, j, loc, nsyn, e, tau, w  localobj fpr
+		filetemp_name = $s1
+		fpr = new File(filetemp_name)
+		nsyn = int(fpr.scanvar())
+		fpr.scanstr()
+
+        SynList.remove_all()
+        SmartStimList.remove_all()
+        WVec.resize(0)
+        NetConList.remove_all()
+		
+		for(i=0;i<nsyn;i=i+1){
+			section_str = fpr.scanstr()
+			loc = fpr.scanvar()
+			tau = fpr.scanvar()
+			e = fpr.scanvar()
+			w = fpr.scanvar()
+			push_section(section_str)
+			tempobj = new ExpSyn(loc)
+            tempobj.tau = tau
+            tempobj.e = e
+            SynList.append(tempobj)
+            WVec.append(w)
+            tempobj = new SmartStim()
+            tempobj.ntimes = 0
+            SmartStimList.append(tempobj)
+            tempobj = new NetCon(tempobj,SynList.object(SynList.count()-1))
+            tempobj.weight = w
+            NetConList.append(tempobj)
+        }
+	}
+
+    proc load_synapses(/*filetemp_name*//*SectionsList*/) { local i, j, nsyn
+        //strdef filetemp_name
+        Sections = $o2
+        filetemp_name = $s1
+        SynList.remove_all()
+        WVec.resize(0)
+        SmartStimList.remove_all()
+        NetConList.remove_all()
+        myfile = new File()
+        myfile.ropen(filetemp_name)
+        nsyn = myfile.scanvar()
+        myfile.scanstr(tmptemp_name)
+        
+        if(!strcmp(tmptemp_name,temp_name)) {
+            fprint("Warning, redefining the temp_name of synapses %s to %s\n",temp_name,tmptemp_name)
+        }
+        
+        temp_name = tmptemp_name
+        
+        pushsec = new SectionRef()
+        
+        for(i=0;i<nsyn;i=i+1){
+            compart = int(myfile.scanvar())
+            location = myfile.scanvar()
+            tau = myfile.scanvar()
+            e = myfile.scanvar()
+            w = myfile.scanvar()
+            //fprint("Read compart %d, location %f, tau %f, e %f, w %f\n",compart,location,tau,e, w)
+            access Sections.object(compart).sec()
+            tempobj = new ExpSyn(location)
+            tempobj.tau = tau
+            tempobj.e = e
+            SynList.append(tempobj)
+            WVec.append(w)
+            tempobj = new SmartStim()
+            tempobj.ntimes = 0
+            SmartStimList.append(tempobj)
+            tempobj = new NetCon(tempobj,SynList.object(SynList.count()-1))
+            tempobj.weight = w
+            NetConList.append(tempobj)
+        }
+        
+        access pushsec.sec()
+        myfile.close()
+    }
+	    
+    proc load_spike_times(/*filetemp_name*/) { local i, j, n
+        strdef filetemp_name 
+        filetemp_name = $s1
+        myfile.ropen(filetemp_name)
+        n = myfile.scanvar()
+        for(i=0;i<n;i=i+1){
+            ind = myfile.scanvar()
+            tempobj = SmartStimList.object(ind)
+            ns = myfile.scanvar()
+            //fprint("Read for synapse %d %d spikes: ",ind,ns)
+            for(j=0;j<ns;j=j+1){
+                tempobj.onset[j] = myfile.scanvar()
+                //fprint("%f ",tempobj.onset[j])
+            }
+            //fprint("\n")
+            tempobj.ntimes = ns
+            
+        }
+		myfile.close()
+    }
+	
+	proc set_spike_template(/*pattern_template*/){
+		spike_template = $o1
+	}
+	
+	proc set_spikes_from_template(/*seed*/){ local i, j, m, n, spike, reli, var, bo
+		if(numarg()>0){
+			seed = $1
+		} else {
+			seed = 1111
+		}
+		printf("Reseting times from template with seed %f\n",seed)
+		//printf("Before reset the first spike is %f\n",SmartStimList.object(0).onset[0])
+
+		spike_template.generate(SmartStimList,seed)
+		//printf("After reset the first spike is %f\n",SmartStimList.object(0).onset[0])
+		//printf("If these aren't different, then you have a problem...\n")
+		bo = utilities.nilstrp(auto_output_file) 
+		if(!bo){
+			sprint(tempout,"%s_%d.spikes",auto_output_file,auto_output_count)
+			auto_output_count = auto_output_count + 1
+			this.save_spike_times_for_matlab(tempout)
+		}
+	}
+			
+	proc load_spike_times_template_from_file(/*templatefn &rest seed*/){ local i,j,n,m,spike,reli,prec
+		strdef templatefn
+		templatefn = $s1
+		myfile = new File()
+		myfile.ropen(templatefn)
+		n = myfile.scanvar()
+		m = SmartStimList.count()
+		if(numarg()>1){
+			seed = $2
+			random = new Random(seed)
+		}else{
+			random = new Random(1111)
+		}
+		
+		for(j=0;j<m;j=j+1){
+			SmartStimList.object(j).ntimes = 0
+		}
+		
+		spike_template = new PatternTemplate(n)
+		
+		for(i=0;i<n;i=i+1){
+			spike = myfile.scanvar()
+			reli = myfile.scanvar()
+			var = myfile.scanvar()
+			var = 1/sqrt(var)
+			spike_template.times.append(spike)
+			spike_template.relis.append(reli)
+			spike_template.precs.append(var) //Var is not var, its prec
+	    }
+	}
+	
+	proc save_spike_times(/*filetemp_name*/){ local i, j, n, m
+		strdef filetemp_name
+		filetemp_name = $s1
+		ofile = new File()
+		ofile.wopen(filetemp_name)
+		n = SmartStimList.count()
+		ofile.printf("%d %s\n", n, temp_name)
+		for(i=0;i<n;i=i+1){
+			tempobj = SmartStimList.object(i)
+			ofile.printf("%d %d ", i, tempobj.ntimes)
+			for(j=0;j<tempobj.ntimes;j=j+1){
+				ofile.printf("%f ",tempobj.onset[j])
+			}
+			ofile.printf("\n")
+		}
+		ofile.close()
+	}	
+	
+	proc save_spike_times_for_matlab(/*filetemp_name*/){ local i, j, n, m, time
+		strdef filetemp_name
+		filetemp_name = $s1
+		ofile = new File()
+		if(numarg()==2){
+			ofile.aopen(filetemp_name)
+		} else {
+			ofile.wopen(filetemp_name)
+		}
+		n = SmartStimList.count()
+		
+		m = 0
+		for(i=0;i<n;i=i+1){
+			if(m<SmartStimList.object(i).ntimes){
+				m = SmartStimList.object(i).ntimes
+			}
+		}
+		
+		for(i=0;i<n;i=i+1){
+			tempobj = SmartStimList.object(i)
+			for(j=0;j<m;j=j+1){
+				time = 0
+				if(j<tempobj.ntimes){
+					time = tempobj.onset[j]
+				}
+				ofile.printf("%f\t",time)
+			}
+			ofile.printf("\n")
+		}
+		ofile.close()
+		
+	}
+endtemplate SynTypeKeeper

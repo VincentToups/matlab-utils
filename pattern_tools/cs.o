@@ -1,0 +1,93 @@
+/* This file produced from cscrieber.c.lpp by luacpp */
+/* which is copy right 2006 J.V. Toups */
+#include<stdio.h>
+#include<stdlib.h>
+#include<math.h>
+#include<mex.h>
+
+#define pi (3.14159265358979)
+#define e  (2.71828182845905)
+
+#define COEF (1.25331413731550)
+
+#define SPIKES			 prhs[0]
+#define SIGMAS			 prhs[1]
+#define DT			 prhs[2]
+#define MS			 plhs[0]
+
+double metric(double * train1, double * train2, long len1, long len2, double sigma);
+/* LEN1 and LEN2 are the maximum lengths of the trains, the trains themselves can
+ * have terminating zeros and the function will behave properly.  The lengths are
+ * just for those cases where there are as many spikes as elements in the arrays so
+ * we can prevent buffer overruns. */
+
+
+void mexFunction( int nlhs,         mxArray * plhs[],
+                  int nrhs,         mxArray * prhs[] ){
+    
+    int i,j,k;
+    
+    int output_size[3];
+    double * ms;
+    
+    if(nrhs!=3){
+        mexErrMsgTxt("mlmapmod_c requires 3 arguments");
+    }
+    if(nlhs!=1){
+        mexErrMsgTxt("mlmapmod_c requires 1 output arguments");
+    }
+    double * spikes;
+    const int * sz_spikes;
+    int nd_spikes;
+    double * sigmas;
+    const int * sz_sigmas;
+    int nd_sigmas;
+    double * dt;
+    const int * sz_dt;
+    int nd_dt;
+    nd_spikes = mxGetNumberOfDimensions(SPIKES);
+    sz_spikes = mxGetDimensions(SPIKES);
+    spikes = mxGetPr(SPIKES);
+    mexPrintf("Finished getting data from spikes\n");
+    nd_sigmas = mxGetNumberOfDimensions(SIGMAS);
+    sz_sigmas = mxGetDimensions(SIGMAS);
+    sigmas = mxGetPr(SIGMAS);
+    mexPrintf("Finished getting data from sigmas\n");
+    nd_dt = mxGetNumberOfDimensions(DT);
+    sz_dt = mxGetDimensions(DT);
+    dt = mxGetPr(DT);
+    mexPrintf("Finished getting data from dt\n");
+
+    output_size[0] = sz_sigmas[0];
+    output_size[1] = output_size[2] = sz_spikes[1];
+    MS = mxCreateDoubleArray(3,output_size, mxClassIDFromClassName('double'), mxREAL );
+    ms = mxGetPr(MS);
+
+    for(i=0;i<sz_sigmas[0];i++){
+        for(j=0;j<sz_spikes[1];j++){
+            for(k=j+1;k<sz_spikes[1];k++){
+                ms[i + sz_sigma[0]*j + sz_sigma[0]*sz_spikes[1]*k] = metric( spikes+(long)sz_spikes[0]*j, spikes+(long)sz_spikes[0]*k, (long)sz_spikes[0], (long)sz_spikes[0], sigmas[i]);
+            }
+        }
+    }
+    
+}
+
+double metric( double * train1 , double * train2, long len1, long len2, double sigma){
+    int i = 0;
+    int j = 0;
+    double t1, t2, temp;
+    double total = 0;
+    double norm = 0;
+
+    while(i<len1 && train1[i] != 0){
+        while(j<len2 && train2[j] != 0){
+            t1 = train1[i];
+            t2 = train2[j];
+            temp = t1-t2;
+            total = total + pow(e, -(temp*temp)/(4*sigma*sigma));
+            norm = norm + 1;
+        }
+    }
+    return total/norm;
+}

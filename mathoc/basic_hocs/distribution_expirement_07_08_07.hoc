@@ -1,0 +1,124 @@
+xopen("basic_topology_j7.hoc")
+xopen("load_sim_classes.hoc")
+
+/*
+
+(let ((ns '(1 2 3 4)) (types '("exc" "inh")))
+  (forward-line)
+  (forward-line)
+  (forward-line)
+  (loop for n in ns do
+    (loop for type in types do
+       (insert (format "dend_syns_%s_%d_template\n" type n)))))
+*/
+	   
+//These are the templates for each part of the cell	   
+
+/*
+dend_syns_exc_1_template
+dend_syns_inh_1_template
+dend_syns_exc_2_template
+dend_syns_inh_2_template
+dend_syns_exc_3_template
+dend_syns_inh_3_template
+dend_syns_exc_4_template
+dend_syns_inh_4_template
+
+soma_exc_template
+soma_inh_template
+*/
+
+//Changes can be made to the above without resetting the
+// Synapse groups as long as the type of the template does not
+// change.  Hence the benefit to using 
+
+//Create some things to save files
+
+//Creat some things to regenerate spikes
+
+//We need a grid of 5x5 experiments varying inh and exc strength
+
+we = .0027
+wi = .00078
+
+
+//wistep = .00025
+//westep = .0009
+
+seedseed = 1001
+objref seedrand 
+seedrand = new Random(seedseed)
+
+//proc init(/*mode,secind,loc,sections,filename*/){
+objref ss, sv 
+ss = new SpikeTrainSaver("a",soma_index,.5,Sections,"distribution_data/a4_splits.spikes")
+sv = new VoltageTraceSaver("a",soma_index,.5,Sections,"/tmp/disttestdata1.voltages")
+saverList.append(ss)
+saverList.append(sv)
+
+tstop = 2000
+
+dend_syns_inh_1.set_all_ws(wi)
+dend_syns_inh_2.set_all_ws(wi)
+dend_syns_inh_3.set_all_ws(wi)
+dend_syns_inh_4.set_all_ws(wi)
+
+dend_syns_exc_1.set_all_ws(we)
+dend_syns_exc_2.set_all_ws(we)
+dend_syns_exc_3.set_all_ws(we)
+dend_syns_exc_4.set_all_ws(we)
+
+soma_inh.set_all_ws(wi)
+soma_exc.set_all_ws(we)
+
+begintemplate OString
+public str
+strdef str
+
+	proc init(/*strdef*/){
+		str = $s1
+	}
+endtemplate OString
+
+objref fnmlist
+fnmlist = new List()
+
+fnmlist.append(new OString("synapse_locations/a4_split_5"))
+fnmlist.append(new OString("synapse_locations/a4_split_4"))
+fnmlist.append(new OString("synapse_locations/a4_split_3"))
+fnmlist.append(new OString("synapse_locations/a4_split_2"))
+fnmlist.append(new OString("synapse_locations/a4_split_1"))
+
+objref ff_exc, ff_exc_temp
+ff_exc = new SynTypeKeeper()
+ff_exc_temp = new PatternTemplate(1,"times",400,"stds",10,"relis",.15)
+ff_exc.set_spike_template(ff_exc_temp)
+
+tstop = 800
+
+for(ii=0;ii<fnmlist.count();ii=ii+1){
+	ff_exc.load_synapses(fnmlist.object(ii).str,Sections)
+	ff_exc.set_all_ws(we)
+	for(ei=0;ei<40;ei=ei+1){
+		
+		ff_exc.set_spikes_from_template(int(seedrand.uniform(0,222)))
+		
+		dend_syns_inh_1.set_spikes_from_template(int(seedrand.uniform(0,2222)))
+		dend_syns_inh_2.set_spikes_from_template(int(seedrand.uniform(0,2222)))
+		dend_syns_inh_3.set_spikes_from_template(int(seedrand.uniform(0,2222)))
+		dend_syns_inh_4.set_spikes_from_template(int(seedrand.uniform(0,2222)))
+		
+		dend_syns_exc_1.set_spikes_from_template(int(seedrand.uniform(0,2222)))
+		dend_syns_exc_2.set_spikes_from_template(int(seedrand.uniform(0,2222)))
+		dend_syns_exc_3.set_spikes_from_template(int(seedrand.uniform(0,2222)))
+		dend_syns_exc_4.set_spikes_from_template(int(seedrand.uniform(0,2222)))
+		
+		soma_exc.set_spikes_from_template(int(seedrand.uniform(0,2222)))
+		soma_inh.set_spikes_from_template(int(seedrand.uniform(0,2222)))
+		
+		init()
+		run()
+		save()
+	}
+
+}

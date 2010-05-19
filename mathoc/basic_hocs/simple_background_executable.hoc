@@ -1,0 +1,68 @@
+tstop = 1000
+load_file("noload.hoc")
+xopen("./basic_hocs/simplified_anatomy.hoc")
+//xopen("./basic_hocs/gui.hoc")
+xopen("./basic_hocs/utilities.hoc")
+xopen("./basic_hocs/pattern_template.hoc")
+xopen("./basic_hocs/syn_type_keeper.hoc")
+xopen("./basic_hocs/oscillation_template.hoc")
+xopen("./basic_hocs/savers.hoc")
+
+objref apsynsE
+objref apsynsI
+objref bassynsE 
+objref bassynsI
+
+xopen("./basic_hocs/DistFromSomaLambda.hoc")
+
+// Time
+tstop = 1000
+
+
+// Default values for simulation
+g_e = 0.00625
+g_i = 0.00313
+e_e = 0
+e_i = -75
+tau_e = 3
+tau_i = 11
+efficiency_factor = 10
+ne_ap = 2000
+ni_ap = 1000
+ne_bas = 2000
+ni_bas = 1000
+rate_e_ap = 1
+rate_i_ap = 5
+rate_e_bas = 1
+rate_i_bas = 5
+nrepeat = 0
+strdef trace_file
+strdef spike_file
+strdef do_instead 
+do_instead = ""
+master_seed = 0
+apsynsE_osc_amp = 0
+apsynsE_osc_freq = 40
+apsynsI_osc_amp = 0
+apsynsI_osc_freq = 10
+bassynsE_osc_freq = 40
+bassynsE_osc_amp = 0
+bassynsI_osc_freq = 10
+bassynsI_osc_amp = 0
+
+trace_file = "./data/simple_background.trace"
+spike_file = "./data/simple_background.spikes"
+
+print "Doing parameter file"
+xopen(parameter_file)
+printf("g_e is now %f\n", g_e)
+
+printf("do instead is %s\n", do_instead)
+
+if (strcmp(do_instead,"")==0) {
+	xopen("./basic_hocs/default_simple_simulation.hoc")	
+} else {
+	xopen(do_instead)
+}
+
+

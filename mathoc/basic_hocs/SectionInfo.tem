@@ -1,0 +1,55 @@
+/*----------------------------------------------------------------------------
+
+	Jean-Marc Fellous
+	Salk Institute - C.N.L.
+	fellous@salk.edu
+
+----------------------------------------------------------------------------*/
+
+
+begintemplate SectionInfo
+public Area, Nsections, SetMaxSynNb, MaxSynNbAssigned,MaxNSyn, NSyn, SecSynDensity
+
+objref Area, MaxNSyn, NSyn, SecSynDensity
+
+proc init() {
+        Area=new Vector($1)				// area of each section
+        MaxNSyn=new Vector($1)			// maximum number of synapses allowed in each section
+        NSyn=new Vector($1)				// current number of synapses in each section
+        SecSynDensity=new Vector($1)	// synaptic density of each section
+        Nsections=$1
+        MaxSynNbAssigned=0
+}
+
+proc SetMaxSynNb(){						// computes the maximum number of synapses, given the density
+	i=$1
+	MaxNSyn.x[i]=round(SecSynDensity.x[i]*Area.x[i])
+}
+
+
+
+
+func round(){local e
+	e=int($1)
+	if($1-e>0.5)return e+1
+	return e
+}
+
+endtemplate SectionInfo
+
+
+
+
+
+begintemplate MyString
+public string
+strdef string
+proc init(){
+	string=$s1
+}
+
+endtemplate MyString
+
+
+
+

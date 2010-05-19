@@ -1,0 +1,7 @@
+function process_ehoc(strings)
+   local state = 
+   local buffer
+
+end
+
+function read_proc

@@ -1,0 +1,10 @@
+objref soma_rec, basilar1_rec, basilar2_rec, basilar3_rec, apical_rec
+
+soma_rec = newVoltageTraceSaverName("a","soma", .5, soma_voltage_trace_fn)
+
+basilar1_rec = newVoltageTraceSaverName("a","basilar1", .5, basilar1_voltage_trace_fn)
+basilar2_rec = newVoltageTraceSaverName("a","basilar2", .5, basilar2_voltage_trace_fn)
+basilar3_rec = newVoltageTraceSaverName("a","basilar3", .5, basilar3_voltage_trace_fn)
+
+apical_rec = newVoltageTraceSaverName("a","apical", .5, apical_voltage_trace_fn)
+

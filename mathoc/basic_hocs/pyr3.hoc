@@ -1,0 +1,67 @@
+/*
+
+This port was made from the FORTRAN code into the NEURON enviroment based on 
+
+	Traub RD, Buhl EH, Gloveli T, Whittington MA. Fast Rhythmic Bursting Can Be Induced in Layer 2/3 Cortical Neurons by Enhancing Persistent Na(+) Conductance or by Blocking BK Channels.J Neurophysiol. 2003 Feb;89(2):909-21
+
+This port was made by Roger D Traub and Maciej Lazarewicz (mlazarew@seas.upenn.edu)
+
+Thanks to Ashlen P Reid for help with porting a morphology of the cell.
+
+*/
+
+proc setFig2() {
+	graphList[0].remove_all()
+	xopen("fig2.ses")
+	tstop = 1000
+}
+
+proc setFig4() {
+	graphList[0].remove_all()
+	xopen("fig4.ses")
+	tstop = 450
+}
+
+proc setFig5() {
+	graphList[0].remove_all()
+	xopen("fig5.ses")
+	tstop = 1200
+}
+
+proc setFig6() {
+	graphList[0].remove_all()
+	xopen("fig5.ses")
+	tstop = 1200
+}
+
+proc setFig7() {
+	graphList[0].remove_all()
+	xopen("fig4.ses")
+	tstop = 450
+}
+
+load_file("../basic_hocs/pyr3_template")
+
+objref pyr3_
+
+dt     		= 0.025 // Simulation are producion proper results even with time step 25 us
+steps_per_ms 	= 40
+
+tstop  		= 1000
+v_init 		= -70
+
+xpanel("Traub RD 2003 Cortical Pyramidal Neuron Layer 2/3")
+	xbutton("Figure 2 ( left )", " pyr3_ = new pyr3( 21 ) setFig2() run()" )
+	xbutton("Figure 2 ( right )", " pyr3_ = new pyr3( 22 ) setFig2() run()" )
+	xbutton("Figure 4 Injection 2.5 nA", " pyr3_ = new pyr3( 41 ) setFig4() run()" )
+	xbutton("Figure 4 Injection 1.5 nA", " pyr3_ = new pyr3( 42 ) setFig4() run()" )
+	xbutton("Figure 4 Injection 1.1 nA", " pyr3_ = new pyr3( 43 ) setFig4() run()" )
+	xbutton("Figure 4 Injection 0.6 nA", " pyr3_ = new pyr3( 44 ) setFig4() run()" )
+	xbutton("Figure 5 B1", " pyr3_ = new pyr3( 51 ) setFig5() run() " )
+	xbutton("Figure 5 B2", " pyr3_ = new pyr3( 52 ) setFig5() run()" )
+	xbutton("Figure 6 B1", " pyr3_ = new pyr3( 61 ) setFig6() run()" )
+	xbutton("Figure 6 B2", " pyr3_ = new pyr3( 62 ) setFig6() run()" )
+	xbutton("Figure 7 g_NaP x 0.0", " pyr3_ = new pyr3( 71 ) setFig7() run()" )
+	xbutton("Figure 7 g_NaP x 0.7", " pyr3_ = new pyr3( 72 ) setFig7() run()" )
+	xbutton("Figure 7 g_NaP x 1.0", " pyr3_ = new pyr3( 73 ) setFig7() run()" )
+xpanel(6,105)

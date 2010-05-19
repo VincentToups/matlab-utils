@@ -1,0 +1,6 @@
+syntax: glob
+*.mat
+*.eps
+*.set
+*.dat
+*.jpg

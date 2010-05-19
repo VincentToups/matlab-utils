@@ -1,0 +1,196 @@
+begintemplate ShapeSegment 
+public init, start, end, rate
+
+	start_ = 0
+	end_ = 0
+	rate_ = 0
+
+	proc init(/*start, end, rate*/){
+		start_ = $1
+		end_ = $2
+		if(numarg()<3) {
+			rate_ = 0
+		} else {
+			rate_ = $3
+		}
+	}
+
+	func start( ){
+		if(numarg()==0){
+			return start_
+		} else {
+			start_ = $1
+			return 0
+		}
+	}
+	
+	func end( ){
+		if(numarg()==0){
+			return end_
+		} else {
+			end_ = $1
+			return 0
+		}
+	}
+	
+	func rate( ){
+		if(numarg()==0){
+			return rate_
+		} else {
+			rate_ = $1
+			return 0
+		}
+	}
+	
+endtemplate ShapeSegment
+
+begintemplate ShapeTemplate
+public init, add_segment, set_segments, generate, output_dt, clear, append_seg, load_segs_from_file, set_seed_pool
+external tstop
+objref segment_list, onsetters, ofile, ifile, tempobj, this, seedpool, nil
+strdef ifname, ofname, tempstr, tempstr2, segfile, sysstring
+gendt = .01
+seedi = 0
+	proc init(/* onset1, rate1, ... onsetn, raten */){ local narg, i, j, k, c, next_onset, ti, current_onset
+		narg = numarg()
+		if(narg==0){
+			segment_list = new List()
+		} else if((narg % 2) != 0) {
+			print "ShapeSegment needs an even number of arguments."
+			narg = 1/0
+		} else {
+			segment_list = new List()
+			for(i=1;i<=narg;i = i + 2){				
+				if((i+2)>narg) {
+					next_onset = tstop
+				} else {
+					ti = i
+					i = i + 2
+					next_onset = $i
+					i = ti
+				}
+				ti=i
+				current_onset = $i
+				i = i + 1
+				current_rate = $i
+				segment_list.append(new ShapeSegment(current_onset, next_onset, current_rate))
+				i = ti
+			}
+		}
+		gendt = .1
+		seedi = 0
+	}
+	
+	proc clear() {
+		segment_list = new List()
+	}
+	
+	proc append_seg(/*start, stop, rate*/){
+		segment_list.append( new ShapeSegment($1,$2,$3) ) 
+	}
+	
+	proc load_segs_from_file(/*segfile*/){ local fnsegs, i, fstart, fstop, rate 
+		segfile = $s1
+		ifile = new File()
+		ifile.ropen(segfile)
+		fnsegs = ifile.scanvar()
+		for(i=0;i<fnsegs;i=i+1){
+			fstart = ifile.scanvar()
+			fstop = ifile.scanvar()
+			rate = ifile.scanvar()
+			this.append_seg(fstart,fstop,rate)
+		}
+	}
+	
+	proc write_out_generate_file(/*seed, n*/){ local n, i, j, seed
+		seed = $1
+		n = $2
+		ofile = new File()
+		ofile.mktemp()
+		ofile.wopen()
+//		print "gendt"
+//		print gendt
+		ofile.printf("%f %f %f %f %d\n", 0, tstop, gendt, n, seed)
+		for(i=0;i<segment_list.count();i=i+1){
+			tempobj = segment_list.object(i)
+			ofile.printf("%f %f %f\n",tempobj.start, tempobj.end, tempobj.rate)
+		}
+		ofile.close()
+	}
+	
+	proc read_in_spikes(/*filename, onsetters*/){ local i, indx, n, spiken, time
+		ifname = $s1
+		onsetters = $o2
+		ifile = new File()
+		ifile.ropen(ifname)
+		
+		n=onsetters.count()
+		for(i=0;i<n;i=i+1){
+			tempobj = onsetters.object(i)
+			tempobj.ntimes = 0
+		}
+		
+		while(!ifile.eof()){
+			n = ifile.scanvar()-1
+			spiken = ifile.scanvar()-1
+			time = ifile.scanvar()
+			tempobj = onsetters.object(n)
+			tempobj.onset[spiken] = time
+			tempobj.ntimes = tempobj.ntimes + 1
+		}		
+		ifile.close()
+	}
+	
+	proc do_generation(/*desc_file, spikes_file*/) { 
+		sprint(tempstr,"rate_to_spikes %s %s", $s1, $s2)
+		system(tempstr)
+	}
+	
+	func output_dt(/*dt*/) {
+		if(numarg()==0){
+			return gendt
+		} else {
+			gendt = $1
+			return gendt
+		}
+		
+	}
+	
+	proc set_seed_pool(/*seedpool*/){
+		seedpool = $o1
+//		print "seedpool set!"
+//		print seedpool.size()
+	}
+	
+	proc generate(/* onsetters, seed, metaseed */) { local i, m, j, seed, isi, f, p, a, metaseed, localrate 
+		onsetters = $o1
+		if(numarg()>1){
+			seed = $2
+		} else {
+			seed = 1111
+		}
+		if(!(seedpool == nil)){
+//			print "HERE WE ARE"
+//			print seedpool.size()
+			if(seedpool.size()>0){
+//				print "UND EVEN MORE"
+				seed = seedpool.get(seedi)
+				seedi = (seedi + 1) % seedpool.size()
+			}
+		}
+		
+		write_out_generate_file(seed, onsetters.count() )
+		ofname = ofile.getname()
+		ifile = new File()
+		ifile.mktemp()
+		ifname = ifile.getname()
+		do_generation(ofname,ifname)
+		read_in_spikes(ifname,onsetters)
+		sprint(sysstring,"rm %s",ofname)
+		system(sysstring)
+		sprint(sysstring,"rm %s",ifname)
+		system(sysstring)
+		
+	}
+	
+endtemplate ShapeTemplate

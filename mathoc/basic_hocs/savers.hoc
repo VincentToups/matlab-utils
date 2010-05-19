@@ -1,0 +1,246 @@
+begintemplate SpikeTrainSaver
+
+  public mode, sections, secind, loc, filename, apcounter, apvec, save
+  objref sections, file, tempobj, apcounter, apvec, this, nil
+  strdef mode, filename
+  external saverList
+
+  proc init(/*mode,secind,loc,sections,filename*/){
+	  mode = $s1
+	  secind = $2
+	  loc = $3
+	  sections = $o4
+	  filename = $s5
+
+	  tempobj = new SectionRef()
+	  access sections.object(secind).sec()
+
+	  apcounter = new APCount(loc)
+	  apcounter.thresh = -20
+	  apvec = new Vector()
+	  apcounter.record(apvec)
+
+	  access tempobj.sec()
+
+	  file = new File()
+	  if(!strcmp(mode,"a")){
+		  file.wopen(filename)
+		  file.close()
+	  }
+	  if(!(nil==saverList)){
+		  saverList.append(this)
+	  }	
+  }
+
+  proc save() { local i,j,m,n
+	  n = apvec.size()
+	  file = new File()
+	  if(!strcmp(mode,"a")){
+		  file.aopen(filename)
+	  } else if(!strcmp("w")){
+		  file.aopen(filename)
+	  }
+	  if(n==0){
+		  file.printf("0.0")
+	  }else{
+		  for(i=0;i<n;i=i+1){
+			  file.printf("%f\t",apvec.get(i))
+		  }
+	  }
+	  file.printf("\n")
+	  file.close()
+  }
+
+endtemplate SpikeTrainSaver
+
+obfunc newSpikeTrainSaverName(/* mode, sectionname, loc, filename */) { local i, j  localobj seclist
+	return new SpikeTrainSaver($s1,0,$3,utils.list(string_to_secref($s2)),$s4)
+}
+
+begintemplate VoltageTraceSaver
+  public mode, sections, secind, loc, apcounter, vvec, save
+  objref sections, file, tempobj, apcounter, vvec, this, nil, pointProcObj
+  strdef filename, mode, varname, estr
+  external saverList
+
+  proc init(/*mode,secind,loc,sections,filename*/){ local altvar
+
+	  mode = $s1
+	  secind = $2
+	  loc = $3
+	  sections = $o4
+	  filename = $s5
+	  if(numarg()>=6) {
+		  printf("Where argtype is %d\n",argtype(6))
+		  if(argtype(6)==1){
+			  printf("Only sensible path.\n")
+			  pointProcObj = $o6
+			  varname = $s7
+		  } else {
+			  varname = $s6  
+		  }
+		  altvar = 1
+	  } else {
+		  altvar = 0  
+	  }
+	  //printf("altvar is %d\n",altvar)
+	  
+	  
+	  //	  print mode
+	  //	  print secind
+	  //	  print loc
+	  //	  print sections
+	  //	  print filename
+	  
+	  vvec = new Vector()
+	  
+	  tempobj = new SectionRef()
+	  if(secind!=-1){
+		  access sections.object(secind).sec()
+	  }
+	  if(!altvar) {
+		  vvec.record(&v(loc))
+	  } else {
+          if(loc>0){
+		    sprint(estr,"vvec.record(&%s(loc))", varname )
+          } else {
+            sprint(estr,"vvec.record(&pointProcObj.%s)", varname )
+          }
+		  printf("executing: %s\n",estr)
+		  execute(estr,this)
+	  }
+	  access tempobj.sec()
+
+	  file = new File()
+	  if(!strcmp(mode,"a")){
+		  file.wopen(filename)
+		  file.close()
+	  }
+	  if(!(nil==saverList)){
+		  saverList.append(this)
+	  }
+  }
+
+  proc save() { local i,j,m,n
+	  n = vvec.size()
+	  file = new File()
+	  if(!strcmp(mode,"a")){
+		  file.aopen(filename)
+
+	  } else if(!strcmp("w")){
+		  file.wopen(filename)
+	  } else {
+		  file.wopen(filename)
+	  }
+	  for(i=0;i<n;i=i+1){
+		  file.printf("%f\t",vvec.get(i))
+	  }
+	  file.printf("\n")
+	  file.close()
+  }
+
+endtemplate VoltageTraceSaver
+
+obfunc newVoltageTraceSaverName(/* mode, sectionname, loc, filename, &optional varnam */) { local i, j  localobj seclist
+	printf("newVoltageTraceSaverName numarg is %d\n", numarg())
+	if(numarg()==4){
+		return new VoltageTraceSaver($s1,0,$3,utils.list(string_to_secref($s2)),$s4)
+	} else if (numarg()==5) {
+		return new VoltageTraceSaver($s1,0,$3,utils.list(string_to_secref($s2)),$s4,$s5)
+	} else {
+		print "newVoltageTraceSaverName needs 4 or 5 arguments"
+		print 1/0
+	}
+}
+
+begintemplate VClampCurrentSaver
+
+
+  public mode, sections, secind, loc, apcounter, ivec, save, voltage, vclamp
+  objref sections, file, tempobj, vclamp, ivec, this, nil
+  strdef filename, mode
+  external saverList
+
+  proc init(/*mode,secind,loc,voltage,sections,filename*/){
+	  mode = $s1
+	  secind = $2
+	  loc = $3
+	  voltage = $4
+	  sections = $o5
+	  filename = $s6
+
+	  ivec = new Vector()
+	  tempobj = new SectionRef() // Push the current section
+	  // Create a single electrode clamp at the proper place
+	  access sections.object(secind).sec()
+	  vclamp = new SEClamp(loc)
+	  vclamp.amp1 = voltage
+	  vclamp.amp2 = voltage
+	  vclamp.amp3 = voltage
+	  ivec.record(&vclamp.i)
+	  file = new File()
+	  if(!strcmp(mode,"a")){
+		  file.wopen(filename)
+		  file.close() // Clear file but prepare for appending
+	  }
+	  if(!(nil==saverList)){
+		  saverList.append(this)
+	  }
+  }
+
+  proc save() { local i, j, k, m, n
+	  n = ivec.size()
+	  file = new File()
+	  if(!strcmp(mode, "a")){
+		  file.aopen(filename)
+	  } else if(!strcmp("w")){
+		  file.wopen(filename)
+	  } else {
+		  file.wopen(filename)
+	  }
+	  for(i=0;i<n;i=i+1){
+		  file.printf("%f\t",ivec.get(i))
+	  }
+	  file.printf("\n")
+	  file.close()
+  }
+
+endtemplate VClampCurrentSaver
+
+begintemplate PathVoltageTraceSaver
+
+  public voltageTraceSaverList, save
+  objref voltageTraceSaverList, file, tempobj, sections, this, nil
+  strdef filename, tempstr, prefix, mode
+  external saverList
+
+  proc init(/*prefix,filename,mode,sections*/){ local i, j, k, m, n, secind, loc
+	  prefix = $s1
+	  filename = $s2
+	  mode = $s3
+	  sections = $o4
+	  file = new File(filename)
+	  n = file.scanvar()
+	  voltageTraceSaverList = new List()
+	  for(i=0;i<n;i=i+1){
+		  secind = file.scanvar()
+		  loc = file.scanvar()
+		  sprint(tempstr,"%s_%d_%f", prefix, secind, loc)
+		  voltageTraceSaverList.append(new VoltageTraceSaver(mode,secind,loc,sections,tempstr))
+	  }
+	  file.close()
+
+	  if(!(nil==saverList)) {
+		  saverList.append(this)
+	  }
+  }
+
+  proc save(){ local i, j, m
+	  m = voltageTraceSaverList.count()
+	  for(i=0;i<m;i=i+1){
+		  voltageTraceSaverList.object(i).save()
+
+	  }
+  }
+
+endtemplate PathVoltageTraceSaver

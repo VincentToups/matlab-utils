@@ -1,0 +1,1 @@
+z = factorial(x)

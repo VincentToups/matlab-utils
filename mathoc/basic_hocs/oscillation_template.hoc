@@ -1,0 +1,219 @@
+begintemplate OscillationTemplate
+    public rate, ratev, freq, freqv, phase, phasev, amp, ampv, init, generate, set_phase, set_phasev, set_rate, write_out_template, set_rate, set_rate_hz, set_freq, set_freq_hz, set_amp, set_phase
+	objref onsetters, random, tempobj, metarandom
+    strdef temp_name, filename
+	external tstop
+	
+	proc write_out_template(/*filename*/){
+		filename = $s1
+		tempobj = new File()
+		tempobj.wopen(filename)
+	    /*(let ((variables '("rate" "ratev" "freq" "freqv" "phase" "phasev" "amp" "ampv" "tstop")))
+		(forward-line) (forward-line)
+        (loop for v in variables do
+		(insert (format "tempobj.printf(\"%%f\\n\",%s)\n" v))))
+		*/
+		tempobj.printf("%f\n",rate)
+		tempobj.printf("%f\n",ratev)
+		tempobj.printf("%f\n",freq)
+		tempobj.printf("%f\n",freqv)
+		tempobj.printf("%f\n",phase)
+		tempobj.printf("%f\n",phasev)
+		tempobj.printf("%f\n",amp)
+		tempobj.printf("%f\n",ampv)
+		tempobj.printf("%f\n",tstop)
+  		tempobj.close()
+		
+	}
+	
+    proc init(/*args*/){ local i, n, j
+		rate =  1
+		ratev=  0
+		freq =  40/1000
+		freqv=  0
+		phase = 0
+		phasev= 0
+		amp   = .1
+		ampv  = 0
+		if(numarg()){
+			if(numarg()%2!=0){
+				printf("I am flabergasted because you gave OscillationTemplate.init an odd number of arguments\n")
+			} else {
+				n = numarg()
+				for(j=1;j<=n;j=j+2){
+					i = j
+					temp_name = $si
+					if(!strcmp("rate",temp_name)){
+						i = j + 1
+						rate=$i
+					} else if(!strcmp("ratehz",temp_name)) {
+						i = j + 1
+						rate=$i/1000
+					} else if(!strcmp("ratev",temp_name)){
+						i = j + 1
+						ratev=$i
+					} else if(!strcmp("ratevhz",temp_name)){
+						i = j + 1
+						ratev = $i/1000
+					} else if(!strcmp("freq",temp_name)){
+						i = j + 1
+						freq=$i
+					} else if(!strcmp("freqv",temp_name)){
+						i = j + 1
+						freqv=$i
+					} else if(!strcmp("freqhz", temp_name)){
+						i = j + 1
+						freq = $i/1000
+					} else if(!strcmp("freqvhz", temp_name)){
+						i = j + 1
+						freqv = $i/1000
+					} else if(!strcmp("phase",temp_name)){
+						i = j + 1
+						phase=$i
+					} else if(!strcmp("phasev",temp_name)){
+						i = j + 1
+						phasev=$i
+					} else if(!strcmp("amp",temp_name)){
+						i = j + 1
+						amp=$i
+					} else if(!strcmp("ampv",temp_name)){
+						i = j + 1
+						ampv=$i
+					} else if(!strcmp("tstop",temp_name)){
+						i = j + 1
+						tstop = $i
+					} else {
+						printf("Warning, I don't recognize the argument %s, so I'll ignore it\n", temp_name)
+					}
+				}
+			}
+		}
+	}
+
+	proc set_rate(){
+		rate=$1
+	}
+	proc set_rate_hz(){
+		rate = $1/1000
+	}
+	proc set_ratev_hz(){
+		ratev = $1/1000
+	}
+	proc set_ratev(){
+		ratev=$1
+	}
+	proc set_freq(){
+		freq=$1
+	}
+	proc set_freq_hz(){
+		freq=$1/1000
+	}
+	proc set_freqv(){
+		freqv=$1
+	}
+	proc set_freqv_hz(){
+		freqv=$1/1000
+	}
+	proc set_phase(){
+		phase=$1
+	}
+	proc set_phasev(){
+		phasev=$1
+	}
+	proc set_amp(){
+		amp=$1
+	}
+	proc set_ampv(){
+		ampv=$1
+	}
+	proc set_tstop(){
+		tstop=$1
+	}
+
+    proc generate(/*onsetters,seed,metaseed*/){ local i, m, j, seed, isi, f, p, a, metaseed, localrate 
+		onsetters = $o1
+		if(numarg()>1){
+			seed = $2
+		} else {
+			seed = 1111
+		}
+		if(numarg()>2){
+			metaseed = $3
+		} else {
+			metaseed = 1111
+		}
+		random = new Random(seed)
+		metarandom = new Random(metaseed)
+		fprint("seed %f\n",seed)
+		m = onsetters.count()
+		for(i=0;i<m;i=i+1){
+			localrate = metarandom.normal(rate,ratev)
+			if (localrate!=0) {
+				isi = 1/localrate
+				//printf("isi is %f\n",isi)
+				f = metarandom.normal(freq,freqv)
+				//printf("freq is %f\n",f)
+				p = metarandom.normal(phase,phasev)
+				//printf("phase is %f\n",p)
+				a = metarandom.normal(amp, ampv)
+				//printf("amp is %f\n",a)
+				
+				onsetters.object(i).ntimes = 0
+				// This function, as a member of the current class
+				// uses the just-initialized random
+				distribute_osc(onsetters.object(i),isi,2*PI*f,p,a,tstop)
+			}
+		}
+	}
+	
+	proc distribute_osc(/*object,isi,freq,phase,amp, tstop*/) { local t,ii,uu,x,xn,dx,amp,omg,phas,tstop, i, amp2
+		//fprint("%f %f %f %f \n",$2,$3,$4,$5)
+		//print "INSIDE"
+		//vcurrent_netstim = $o1
+		//print "assigned"
+		tstop = $6
+//		printf("tstop = %f",tstop)
+//		rate = $2
+		t = -3*(1/$2)
+		i = 0
+		while(t<tstop && i<2000){
+			t = t + random.negexp($2)
+			if(t>0){
+				$o1.onset[i] = t
+				i=i+1
+			}
+		}
+		//printf("total spikes = %d\n",i)
+		//printf("Starting\n")
+		omg=$3
+		amp=$5/omg
+		phas=$4
+		amp2=amp*cos(-phas)
+		if (i>0){
+			for(ii=0; ii<i; ii=ii+1){
+				//fprint("iterating %d\t\n",ii)
+				dx=1
+				uu=$o1.onset[ii]
+				x=uu
+				xn=uu
+				while(dx>0.05){
+					xn=uu+amp*cos(omg*x-phas)-amp2
+					dx=abs(xn-x)
+//					fprint("dx = %f\n",dx)
+					x=xn
+					//printf("%f\n",dx)
+				}
+				//	fprint("Goodness: %f\n",abs(uu-xn+amp*cos(omg*xn-phas)-amp2))
+				$o1.onset[ii]=xn
+			}
+		}
+		//$o1.onset[i] = 1e20
+		$o1.ntimes=i
+
+		if (i==200){			// not more than 200 spikes (max size array in Ksyn).
+			fprint("\n Warning...number of allowed presynaptic times(200) exceeded\n or met exactly")
+		}
+	}
+
+	
+endtemplate OscillationTemplate

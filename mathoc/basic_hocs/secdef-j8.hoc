@@ -1,0 +1,245 @@
+
+/*
+	Sections definitions for Pyramidal cell J8.hoc -
+
+	Jean-Marc Fellous (fellous@salk.edu)
+	Updated Paul Tiesinga (tiesinga@physics.unc.edu) Jan 2007
+*/
+
+
+objref somas,axons, axoniniseg, dendrites, midsoma,aptuft, ptrunk, strunk,trunk, basal,tuft,trunkbasal
+objref dend1,dend2,dend3,dend4, perisomatic
+
+somas=new SectionList()
+axons=new SectionList()
+dendrites=new SectionList()
+ptrunk=new SectionList()
+strunk=new SectionList()
+trunk=new SectionList()
+basal=new SectionList()
+trunkbasal=new SectionList()
+aptuft=new SectionList()
+tuft=new SectionList()
+perisomatic=new SectionList()
+
+// ------------- Soma ------------------------
+
+
+soma {somas.append()}
+soma midsoma=new SectionRef()
+
+
+// -------------- Axon -------------------------
+
+
+for (k=0;k<Naxons;k=k+1){
+	axon[k]{axons.append()}
+}
+
+axon[0] axoniniseg=new SectionRef()
+
+
+
+//----------- Specific to J7: Individual dendritic trees----------------------------------------------------
+
+dend1=new SectionList()
+dend2=new SectionList()
+dend3=new SectionList()
+dend4=new SectionList()
+ 
+ a1_1 {dend1.append()}
+ a1_11 {dend1.append()}
+ a1_111 {dend1.append()}
+ a1_1111 {dend1.append()}
+ a1_1112 {dend1.append()}
+ a1_112 {dend1.append()}
+ a1_1121 {dend1.append()}
+ a1_1122 {dend1.append()}
+ a1_12 {dend1.append()}
+ a1_121 {dend1.append()}
+ a1_1211 {dend1.append()}
+ a1_1212 {dend1.append()}
+ a1_122 {dend1.append()}
+ a1_1221 {dend1.append()}
+ a1_1222 {dend1.append()}
+ a1_12221 {dend1.append()}
+ a1_12222 {dend1.append()}
+
+ a2_1 {dend2.append()}
+ a2_11 {dend2.append()}
+ a2_111 {dend2.append()}
+ a2_1111 {dend2.append()}
+ a2_1112 {dend2.append()}
+ a2_112 {dend2.append()}
+ a2_1121 {dend2.append()}
+ a2_1122 {dend2.append()}
+ a2_12 {dend2.append()}
+ a2_121 {dend2.append()}
+ a2_1211 {dend2.append()}
+ a2_12111 {dend2.append()}
+ a2_121111 {dend2.append()}
+ a2_121112 {dend2.append()}
+ a2_12112 {dend2.append()}
+ a2_121121 {dend2.append()}
+ a2_1211211 {dend2.append()}
+ a2_1211212 {dend2.append()}
+ a2_12112121 {dend2.append()}
+ a2_12112122 {dend2.append()}
+ a2_121122 {dend2.append()}
+ a2_1212 {dend2.append()}
+ a2_12121 {dend2.append()}
+ a2_121211 {dend2.append()}
+ a2_121212 {dend2.append()}
+ a2_12122 {dend2.append()}
+ a2_122 {dend2.append()}
+ a2_1221 {dend2.append()}
+ a2_12211 {dend2.append()}
+ a2_12212 {dend2.append()}
+ a2_1222 {dend2.append()}
+ a2_12221 {dend2.append()}
+ a2_12222 {dend2.append()}
+
+ a3_1 {dend3.append()}
+ a3_11 {dend3.append()}
+ a3_111 {dend3.append()} 
+ a3_1111 {dend3.append()}
+ a3_1112 {dend3.append()}
+ a3_11121 {dend3.append()}
+ a3_11122 {dend3.append()}
+ a3_112 {dend3.append()}
+ a3_1121 {dend3.append()}
+ a3_1122 {dend3.append()}
+ a3_12 {dend3.append()}
+ a3_121 {dend3.append()}
+ a3_1211 {dend3.append()}
+ a3_1212 {dend3.append()}
+ a3_12121 {dend3.append()}
+ a3_12122 {dend3.append()}
+ a3_121221 {dend3.append()}
+ a3_121222 {dend3.append()}
+ a3_1212221 {dend3.append()}
+ a3_1212222 {dend3.append()}
+ a3_12122221 {dend3.append()}
+ a3_12122222 {dend3.append()}
+ a3_121222221 {dend3.append()}
+ a3_1212222211 {dend3.append()}
+ a3_12122222111 {dend3.append()}
+ a3_12122222112 {dend3.append()}
+ a3_1212222212 {dend3.append()}
+ a3_121222222 {dend3.append()}
+ a3_1212222221 {dend3.append()}
+ a3_1212222222 {dend3.append()}
+ a3_12122222221 {dend3.append()}
+ a3_12122222222 {dend3.append()}
+ a3_122 {dend3.append()}
+ a3_1221 {dend3.append()}
+ a3_12211 {dend3.append()}
+ a3_12212 {dend3.append()}
+ a3_1222 {dend3.append()}
+
+ a4_1 {dend4.append()}
+ a4_11 {dend4.append()}
+ a4_111 {dend4.append()}
+ a4_1111 {dend4.append()}
+ a4_1112 {dend4.append()}
+ a4_11121 {dend4.append()}
+ a4_11122 {dend4.append()}
+ a4_112 {dend4.append()}
+ a4_1121 {dend4.append()}
+ a4_1122 {dend4.append()}
+ a4_12 {dend4.append()}
+ a4_121 {dend4.append()}
+ a4_122 {dend4.append()}
+ a4_1221 {dend4.append()}
+ a4_1222 {dend4.append()}
+ a4_12221 {dend4.append()}
+ a4_12222 {dend4.append()}
+
+Ndend1=17
+
+Ndend2=33
+
+Ndend3=37
+
+Ndend4=17
+
+
+// -------- Trunk (mid sections, between distal and proximal)--------------------------------
+
+
+
+// ----------- Tuft/Distal
+
+// ------------ Basal/proximal
+
+
+// ------------ All Dendrites ----------------------
+
+
+forsec dend1 {dendrites.append()}
+forsec dend2 {dendrites.append()}
+forsec dend3 {dendrites.append()}
+forsec dend4 {dendrites.append()}
+
+
+// -------- Distal Tuft compartments ------------------------
+
+// too coarse to list
+
+
+// defines a perisomatic region (soma + basal/proximal)
+
+forsec somas {perisomatic.append()}
+//not defined, first define what is meant by that
+//forsec basal {perisomatic.append()}
+
+
+
+
+
+
+
+
+//
+//------------------------------------------------------------------
+// Morphological corrections
+
+
+
+
+// Spines
+// Based on the "Folding factor" described in
+// Jack et al (1989), Major et al (1994)
+// note, this assumes active channels are present in spines 
+// at same density as dendrites
+// just using a simple spine density model due to lack of data on some neuron types.
+
+spine_dens=1
+spine_area = 0.83 	// um^2  -- K Harris
+
+forsec dendrites{
+		a =0
+    	for(x) a=a+area(x)
+    	F = (L*spine_area*spine_dens + a)/a
+    	L = L * F^(2/3)
+    	for(x) diam(x) = diam(x) * F^(1/3)
+}
+
+// make sure no compartments exceed 10 uM length
+
+forall {
+    	diam_save = diam
+    	n = int(L/10)
+    	nseg = n + 1
+    	if (n3d() == 0) diam = diam_save
+} 
+
+
+
+access midsoma.sec
+distance()
+
+
+//load_file("stdgui.hoc")
+//nrnmainmenu()
+//nrncontrolmenu()

@@ -1,0 +1,71 @@
+/* ;;; Some Emacs Lisp for this code
+(defun dispatcher (n)
+  (cond ((= 0 n)
+		 (format "if (numarg()==0) {\nexecute(tmp)\nreturn Lambda_external_return_val_holder_neuron_sucks\n }"))
+		(t
+		 (let ((start (concat (format " else if (numarg()==%d) {\n sprint(tmp2,tmp" n))))
+		   (loop for i from 1 to n do
+				 (setq start
+					   (concat start (format ", $%d" i))))
+		   (concat start ")\nexecute(tmp2)\nreturn Lambda_external_return_val_holder_neuron_sucks\n}")))))
+							   
+(defun insert-dispatcher (n)
+  (loop for i from 0 to n do
+		(insert (dispatcher i))))
+
+
+
+
+
+*/
+   
+   
+   //
+   
+   
+   
+Lambda_external_return_val_holder_neuron_sucks = 0
+begintemplate Lambda
+  public rep, init, call
+  strdef rep
+  strdef tmp
+  strdef tmp2
+  external Lambda_external_return_val_holder_neuron_sucks
+
+  proc init() {
+	  rep = $s1
+  }
+  
+  func call() { local val, x
+	  sprint(tmp,"Lambda_external_return_val_holder_neuron_sucks = %s", rep)
+	  if (numarg()==0) {
+		  execute(tmp)
+		  return Lambda_external_return_val_holder_neuron_sucks
+	  } else if (numarg()==1) {
+		  sprint(tmp2,tmp, $1)
+		  execute(tmp2)
+		  return Lambda_external_return_val_holder_neuron_sucks
+	  } else if (numarg()==2) {
+		  sprint(tmp2,tmp, $1, $2)
+		  execute(tmp2)
+		  return Lambda_external_return_val_holder_neuron_sucks
+	  } else if (numarg()==3) {
+		  sprint(tmp2,tmp, $1, $2, $3)
+		  execute(tmp2)
+		  return Lambda_external_return_val_holder_neuron_sucks
+	  } else if (numarg()==4) {
+		  sprint(tmp2,tmp, $1, $2, $3, $4)
+		  execute(tmp2)
+		  return Lambda_external_return_val_holder_neuron_sucks
+	  } else if (numarg()==5) {
+		  sprint(tmp2,tmp, $1, $2, $3, $4, $5)
+		  execute(tmp2)
+		  return Lambda_external_return_val_holder_neuron_sucks
+	  } else if (numarg()==6) {
+		  sprint(tmp2,tmp, $1, $2, $3, $4, $5, $6)
+		  execute(tmp2)
+		  return Lambda_external_return_val_holder_neuron_sucks
+	  }
+  }
+
+endtemplate Lambda

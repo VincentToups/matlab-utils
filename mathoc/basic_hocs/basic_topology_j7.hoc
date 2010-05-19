@@ -1,0 +1,257 @@
+/*----------------------------------------------------------------------------
+// cell-synbomb.hoc
+// ----------------
+// Simulation of a reconstructed stellate cell receiving AMPA and GABAa 
+// synapses, releasing randomly.  
+//
+// Author:	Jean-Marc Fellous, Salk Institute - C.N.L., fellous@salk.edu
+//		modified by Ping Wang, ping@salk.edu
+// Last Modified: 3/10/04
+// Modified 26JAN2007 Paul Tiesinga
+// ----------------------------------------------------------------------------*/
+
+// --------------------- Global Variable Declaration ------------------------
+objref rnd
+rnd= new Random(1)
+
+objref ranphas
+ranphas = new Random(809)
+
+
+objref rplot, aplist, apvector, apc1, apc2
+
+//----------------------------------------------------------------------------
+//  load and define general graphical procedures
+//----------------------------------------------------------------------------
+
+load_file("stdgui.hoc")
+//nrnmainmenu()
+//nrncontrolmenu()
+
+//----------------------------------------------------------------------------
+//  general parameters
+//----------------------------------------------------------------------------
+
+dt=0.1
+tstop = 1300
+runStopAt = tstop
+steps_per_ms = 10
+celsius = 36
+v_init = -60
+BgExcRate=1.3
+BgInhRate=5
+PiConst=3.1415926
+BkExcOmg=2*PiConst/100
+BkExcPhase=PiConst/2
+BkExcAmp=0.2
+BkInhOmg=2*PiConst/100
+BkInhPhase=PiConst/2
+BkInhAmp=0.2
+
+
+global_ra = 70		//Ohmcm		// 68 (stuart&spruston)
+
+EK=-80
+ENa=50
+
+//********** Morphology ***********************************
+
+//-- Read morphology
+
+xopen("j8_new.hoc")	// Layer 3 pyramidal from M&S 1995
+
+define_shape()
+
+//-- Define sections
+
+// defines the sections for this cell
+
+xopen("secdef-j8.hoc")	// Layer 3 pyramidal
+
+//********** Physiology *********************************
+
+xopen("j7-physio.hoc") //Keep the same if possible
+
+//--------------- Open model procedure files ---------
+xopen("SectionInfo.tem")
+xopen("morphstats.hoc")
+//xo/pen("graphprocs.hoc")
+
+printstats()
+CreateSecInfo()
+
+//Defines some strings representing the filenames we write out to
+// and read in from
+strdef morphology_out, morphology_map_out
+xopen("vincent_section_list.hoc")
+compile_section_list()
+
+morphology_out = "morphology_out"
+morphology_map_out = "morphology_map_out"
+xopen("vincent_morph_funcs.hoc")
+write_morphology(morphology_out)
+write_morph_map(morphology_map_out)
+
+xopen("load_sim_classes.hoc")
+
+/*
+
+(let ((n 4)
+    (lines 4))
+(loop for type in '("exc" "inh") do 
+  (loop for x from 1 to lines do (forward-line))
+  (insert "objref ")
+  (loop for n from 1 to 4 do
+		(insert (format "dend_syns_%s_%d" type n))
+		(if (not (= n 4)) (insert ",")))
+  (insert "\n")
+  (loop for n from 1 to 4 do
+		(insert (format "dend_syns_%s_%d  = new SynTypeKeeper()\n" type n)))
+  (loop for n from 1 to 4 do
+		(insert (format "dend_syns_%s_%d.load_synapses(\"dend_syns_%s_%d\",Sections)\n" type n type n)))))
+*/
+
+objref dend_syns_exc_1,dend_syns_exc_2,dend_syns_exc_3,dend_syns_exc_4
+dend_syns_exc_1  = new SynTypeKeeper()
+dend_syns_exc_2  = new SynTypeKeeper()
+dend_syns_exc_3  = new SynTypeKeeper()
+dend_syns_exc_4  = new SynTypeKeeper()
+dend_syns_exc_1.load_synapses("synapse_locations/dend_syns_exc_1.syns",Sections)
+dend_syns_exc_2.load_synapses("synapse_locations/dend_syns_exc_2.syns",Sections)
+dend_syns_exc_3.load_synapses("synapse_locations/dend_syns_exc_3.syns",Sections)
+dend_syns_exc_4.load_synapses("synapse_locations/dend_syns_exc_4.syns",Sections)
+
+objref dend_syns_inh_1,dend_syns_inh_2,dend_syns_inh_3,dend_syns_inh_4
+dend_syns_inh_1  = new SynTypeKeeper()
+dend_syns_inh_2  = new SynTypeKeeper()
+dend_syns_inh_3  = new SynTypeKeeper()
+dend_syns_inh_4  = new SynTypeKeeper()
+dend_syns_inh_1.load_synapses("synapse_locations/dend_syns_inh_1.syns",Sections)
+dend_syns_inh_2.load_synapses("synapse_locations/dend_syns_inh_2.syns",Sections)
+dend_syns_inh_3.load_synapses("synapse_locations/dend_syns_inh_3.syns",Sections)
+dend_syns_inh_4.load_synapses("synapse_locations/dend_syns_inh_4.syns",Sections)
+
+objref soma_inh, soma_exc
+soma_inh = new SynTypeKeeper()
+soma_exc = new SynTypeKeeper()
+
+soma_inh.load_synapses("synapse_locations/soma_inh.syns",Sections)
+soma_exc.load_synapses("synapse_locations/soma_exc.syns",Sections)
+
+/*
+(progn (forward-line) (forward-line)
+  (loop for n from 1 to 2 do
+    (insert (format "objref ff_exc_%d\n ff_exc_%d.load_synapses(\"ff_exc_%d\")\n" n n n))))
+*/
+objref ff_exc_1
+ff_exc_1 = new SynTypeKeeper()
+ff_exc_1.load_synapses("synapse_locations/ff_exc_1.syns",Sections)
+objref ff_exc_2
+ff_exc_2 = new SynTypeKeeper()
+ff_exc_2.load_synapses("synapse_locations/ff_exc_2.syns",Sections)
+
+// SET SPIKE GROUP TEMPLATES
+
+objref soma_inh_template, soma_exc_template
+
+soma_inh_template = new OscillationTemplate("rate",.005 ,"freqhz",40,"amp",.0)
+soma_inh.set_spike_template(soma_inh_template)
+soma_exc_template = new OscillationTemplate("rate",.001 ,"freqhz",10,"amp",.0)
+soma_exc.set_spike_template(soma_exc_template)
+
+/*
+
+(let ((n 4)
+    (lines 2))
+  (loop for x from 1 to lines do (forward-line))
+  (loop for type in '("exc" "inh") do 
+    (insert "\nobjref ")
+    (loop for n from 1 to 4 do
+		(insert (format "dend_syns_%s_%d_template" type n))
+		(if (not (= n 4)) (insert ", ")))) (insert "\n"))
+*/
+
+objref dend_syns_exc_1_template, dend_syns_exc_2_template, dend_syns_exc_3_template, dend_syns_exc_4_template
+objref dend_syns_inh_1_template, dend_syns_inh_2_template, dend_syns_inh_3_template, dend_syns_inh_4_template
+
+dend_syns_exc_1_template = new OscillationTemplate("rate",.001 ,"amp",0)
+dend_syns_exc_1.set_spike_template(dend_syns_exc_1_template)
+dend_syns_exc_2_template = new OscillationTemplate("rate",.001 ,"amp",0)
+dend_syns_exc_2.set_spike_template(dend_syns_exc_2_template)
+dend_syns_exc_3_template = new OscillationTemplate("rate",.001 ,"amp",0)
+dend_syns_exc_3.set_spike_template(dend_syns_exc_3_template)
+dend_syns_exc_4_template = new OscillationTemplate("rate",.001 ,"amp",0)
+dend_syns_exc_4.set_spike_template(dend_syns_exc_4_template)
+
+dend_syns_inh_1_template = new OscillationTemplate("rate",.005 ,"amp",0.0)
+dend_syns_inh_1.set_spike_template(dend_syns_inh_1_template)
+dend_syns_inh_2_template = new OscillationTemplate("rate",.005 ,"amp",0.0)
+dend_syns_inh_2.set_spike_template(dend_syns_inh_2_template)
+dend_syns_inh_3_template = new OscillationTemplate("rate",.005 ,"amp",0.0)
+dend_syns_inh_3.set_spike_template(dend_syns_inh_3_template)
+dend_syns_inh_4_template = new OscillationTemplate("rate",.005 ,"amp",0.0)
+dend_syns_inh_4.set_spike_template(dend_syns_inh_4_template)
+
+
+//Set Spike Times
+
+/*
+
+(let ((n 4) (lines 2) (types (list "exc" "inh")))
+  (loop for x from 1 to lines do (forward-line))
+  
+  (loop for i from 1 to n do
+    (loop for type in types do
+	  (insert (format "dend_syns_%s_%d.set_spikes_from_template()\n" type i)))))
+*/
+dend_syns_exc_1.set_spikes_from_template()
+dend_syns_exc_1.save_spike_times_for_matlab("input_spikes/dend_syns_exc_1.spikes")
+dend_syns_inh_1.set_spikes_from_template()
+dend_syns_inh_1.save_spike_times_for_matlab("input_spikes/dend_syns_inh_1.spikes")
+dend_syns_exc_2.set_spikes_from_template()
+dend_syns_exc_2.save_spike_times_for_matlab("input_spikes/dend_syns_exc_2.spikes")
+dend_syns_inh_2.set_spikes_from_template()
+dend_syns_inh_2.save_spike_times_for_matlab("input_spikes/dend_syns_inh_2.spikes")
+dend_syns_exc_3.set_spikes_from_template()
+dend_syns_exc_3.save_spike_times_for_matlab("input_spikes/dend_syns_exc_3.spikes")
+dend_syns_inh_3.set_spikes_from_template()
+dend_syns_inh_3.save_spike_times_for_matlab("input_spikes/dend_syns_inh_3.spikes")
+dend_syns_exc_4.set_spikes_from_template()
+dend_syns_exc_4.save_spike_times_for_matlab("input_spikes/dend_syns_exc_4.spikes")
+dend_syns_inh_4.set_spikes_from_template()
+dend_syns_inh_4.save_spike_times_for_matlab("input_spikes/dend_syns_inh_4.spikes")
+
+soma_exc.set_spikes_from_template()
+soma_exc.save_spike_times_for_matlab("input_spikes/soma_exc.spikes")
+soma_inh.set_spikes_from_template()
+soma_inh.save_spike_times_for_matlab("input_spikes/soma_inh.spikes")
+soma_inh.set_all_ws(.01)
+
+aplist = new List()
+apvector= new Vector()
+midsoma.sec apc1 = new APCount(.5)
+apc1.record(apvector)
+apc1.thresh=-40
+midsoma.sec apc2 = new APCount(.5) // display purposes only, not same as apc1
+aplist.append(apc2)
+
+//x/open("raster.tem")  	// raster template
+
+//rplot = new RasterPlot(aplist,tstop)
+//graphList[0].append(rplot)
+
+
+// Initialize spike times
+
+
+
+objref somatrace_i, somatrace_v
+
+soma{
+	//insert extracellular
+}
+
+//somatrace_i = new Vector(20100) 
+//somatrace_i.record(&soma.i_membrane(0.5)) 
+//somatrace_v = new Vector(20100) 
+//somatrace_v.record(&soma.v(0.5))	

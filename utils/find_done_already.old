@@ -1,0 +1,68 @@
+function [unbuilt,outinfofile,outdatfile]=find_done_already(inparams, cache_info_directory, cache_data_directory)
+%
+%
+global default_cache_info_directory default_cache_data_directory
+
+if ~exist('cache_info_directory') 
+  if ~exist('default_cache_info_directory') || isempty(default_cache_info_directory) || isempty(cache_info_directory)
+    cache_info_directory = '/scratch/jobs/info_cache';
+  else
+    cache_info_directory = default_cache_info_directory;
+  end
+end
+
+if ~exist('cache_data_directory')
+  if ~exist('default_cache_data_directory') || isempty(default_cache_data_directory) || isempty(cache_data_directory)
+    cache_data_directory = '/scratch/jobs/data_cache';
+  else
+    cache_data_directory = default_cache_data_directory;
+  end
+end
+
+pd = pwd;
+
+hn = strrep(hostname,'.','_');
+
+try
+  pd = pwd
+  cd(cache_info_directory);
+  cfiles = dir('cache_info_*.mat');
+  fni = 1;
+  found = 0;
+  unbuilt = 0;
+  while ~found && fni <= length(cfiles)
+    clear datfilename;
+    load(cfiles(fni).name);
+    if structequal(inparams,params)
+      found = 1;
+      outinfofile = [cache_info_directory '/' cfiles(fni).name ];
+      outdatfile = datfilename;
+    else
+      fni = fni + 1;
+    end
+  end
+  if ~found 
+    unbuilt = 1;
+    getnum = @(str) str2num(strrep(strrep(str,['cache_info_' hn '_'],''),'.mat',''));
+    numbers = map(getnum, {cfiles(:).name});
+    if isempty(numbers)
+      n=0;
+    else
+      n=ix(max(numbers),1)+1;
+    end
+    outinfofile = sprintf([cache_info_directory '/' 'cache_info_' hn '_%d.mat'],n);
+    
+    cd(pd);
+    datfilename = new_out_dat_file(cache_data_directory)
+    cd(cache_info_directory);
+    outdatfile = datfilename;
+    params = inparams;
+    pwd
+    cd(pd);
+    save(outinfofile,'params','datfilename');
+  end
+  cd(pd);
+catch
+  cd(pd);
+  rethrow(lasterror);
+end

@@ -1,0 +1,26 @@
+begintemplate SynResetPreSim
+  public init, preSim, tempobj
+  objref tempobj, random, this
+  external __gSynTypeKeepers
+  external preSimList
+  
+  
+  proc init() {
+	  if(numarg()<1){
+		  random = new Random(167544)
+	  } else {
+		  random = new Random($1)
+	  }
+	  preSimList.append(this)
+  }
+
+  proc preSim() { local i,j,k,m,seed
+//	  print "SynResetPreSim.hoc called"
+	  m = __gSynTypeKeepers.count()
+	  for(i=0;i<m;i=i+1){
+//		  print i
+		  __gSynTypeKeepers.object(i).set_spikes_from_template(int(random.uniform(1,1000)))  
+//		  print "Reset all synapses"
+	  } 
+  }
+endtemplate SynResetPreSim

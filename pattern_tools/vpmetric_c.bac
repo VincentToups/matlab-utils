@@ -1,0 +1,285 @@
+#include<mex.h>
+#include<stdlib.h>
+#include<string.h>
+#include<math.h>
+
+
+/* Set to 1 to use Macro versions of dabs, dd  */
+#define     FMACROS     0
+
+#if FMACROS
+
+#define     dabs(a)     (((a)<0) ? (-a) : (a))
+#define     dd(a,b)     (((a)==(b)) ? 1 : 0)
+#define     min(a,b)    (((a)<(b)) ? (a) : (a))
+
+#else /* FMACROS is 0 */
+
+double dabs(double a){
+    if(a<0){
+        return -a;
+    }
+    else{
+        return a;
+    }
+}
+
+double dd(double a,double b){
+    if(a==b){
+        return 1.0;
+    }
+    else{
+        return 0.0;
+    }
+}
+
+double min(double a, double b){
+    if(a<b){
+        return a;
+    }
+    else{
+        return b;
+    }
+}
+#endif /* FMACROS */
+
+void printdbl(double * ptr, int h, int w){
+    int i;
+    int j;
+    mexPrintf("\n");
+    for(i=0;i<h;i++){
+        for(j=0;j<w;j++){
+            mexPrintf("%0.2lf\t",ptr[i+h*j]);
+        }
+        mexPrintf("\n");
+    }
+    mexPrintf("\n");
+}
+        
+
+#define     SPIKES      prhs[0]     /* Spike Trains, store in zero padded */
+                                    /* array.  Column is trial, row is    */
+                                    /* page is time/label.                */
+#define     QS          prhs[1]     /* List of q values */
+#define     KS          prhs[2]     /* List of k values */
+#define     LENS        prhs[3]     /* List of spike train lengths. */
+#define     NSUB        prhs[4]     /* Number of subtrains in the dataset */
+#define     PSUB        prhs[5]     /* Products of the lengths of the     */
+                                    /* non-zero lengthed sub trains of    */
+                                    /* of each trial.                     */
+
+#define     MS          plhs[0]
+
+void mexFunction(   int nlhs,   mxArray *   plhs[],
+                    int nrhs,   const mxArray *   prhs[] ){
+
+    /***************************/
+    /*****START DECLARATINS*****/
+    /***************************/
+
+    /* temporary variables to be used from time to time */
+    int II;
+    int JJ;
+    int temp1;
+    int temp2;
+    double * traina;
+    double * trainb;
+    double * m; /* will hold dynamic programming matrix */
+    int * moff;  /* offsets for accessing m */
+    double * strainsb; /* will hold the reorganized trainb */
+    int * counters; /* will hold some misc counters */
+    int lena;
+    int lenb;
+    double smallest;
+    double option1;
+    double option2;
+    double option3;
+    double q;
+    double k;
+    
+
+    /* index variables for the return matrix */
+    int i=0; /* i indexes q */
+    int j=0; /* j indexes k */
+    int r=0; /* r indexes spike train a */
+    int s=0; /* s indexes spike train b */
+
+    int o1,o2,o3=0; /* succesive offsets for accessing data */
+    
+    int mssize[4];
+    int msz0;
+    int msz1;
+    int msz2;
+
+    /* index variables for the matrix of spike trains */
+    int si,sj,sr=0; /*indices for trial, spike and time/label*/
+    int so1,so2; /* succesive offsets for accessing data */
+    
+    /* pointers to point to matlab data */
+    const int * ntptr; /* number of Trials */
+    const int * nqptr; /* number of Q vals */
+    const int * nkptr; /* number of K vals */
+    double * spikes;
+    double * lens; /*points to the lengths of the spike trains*/
+    double * nsub; /*points to the number of subtrains*/
+    double * psub; /*points to the products of... */
+    double * qs; /*points to the q values*/
+    double * ks; /*points to the k values*/
+
+    double * ms;
+    
+    /****************************/
+    /******END DECLARATIONS******/
+    /****************************/
+
+    /* Get Info for and create the output array, make offsets */
+    
+    ntptr = mxGetDimensions(SPIKES);
+    nqptr = mxGetDimensions(QS);
+    nkptr = mxGetDimensions(KS);
+
+    msz0 = mssize[0] = nqptr[0];
+    msz1 = mssize[1] = nkptr[0];
+    msz2 = mssize[2] = mssize[3] = ntptr[0];
+    
+    o1 = mssize[0];
+    o2 = o1*mssize[1];
+    o3 = o2*mssize[2];
+
+    MS = mxCreateNumericArray(4,mssize,mxDOUBLE_CLASS,mxREAL);
+    ms = mxGetPr(MS);
+
+    /* get info for the spike array, make offsets */
+
+    so1 = ntptr[0];
+    so2 = so1*ntptr[1];
+
+    spikes = mxGetPr(SPIKES);
+    lens = mxGetPr(LENS);
+    nsub = mxGetPr(NSUB);
+    psub = mxGetPr(PSUB);
+    qs = mxGetPr(QS);
+    ks = mxGetPr(KS);
+
+    /*** MAY BE STUPID ***/
+    /*   allocate as big of an array as you could possibly want */
+    /*   and just re-use the space.  */
+    /*   This is a big speed/size trade off, and may be problematic */
+    /*   If future vincent or some other poor grad student is having trouble */
+    /*   move the allocation to two levels into the main loop, and */
+    /*   recalculate the size every time the spike trains change. */
+
+    m = malloc(sizeof(double)*((int)pow((double)(ntptr[1]+1),nsub[0]+1)));
+    /*mexPrintf("%d, %d\n",ntptr[1]+1,(int)nsub[0]+1);
+    mexPrintf("%d\n",(int)pow(5,2));*/
+    moff = malloc(sizeof(int)*(nsub[0]+2));
+    strainsb = malloc(sizeof(double)*nsub[0]*ntptr[1]);
+    counters = malloc(sizeof(int)*nsub[0]);
+    
+
+    for(r=0;r<msz2;r++){
+    for(s=r+1;s<msz2;s++){
+        /* build new default matrix */
+        /* find which train should be 'traina' */
+
+        if( lens[r]*psub[s] < lens[s]*psub[r] ){
+            traina = spikes + r;
+            lena = lens[r];
+            trainb = spikes + s;
+            lenb = lens[s];
+        }
+        else{
+            traina = spikes + s;
+            lena = lens[s];
+            trainb = spikes + r;
+            lenb = lens[r];
+        }
+        /* trainb has to be reorganized, sadly */
+        memset(strainsb,0,sizeof(double)*nsub[0]*ntptr[1]);
+        memset(counters,0,sizeof(int)*nsub[0]);
+        
+        for(sj=0;sj<lenb;sj++){
+            temp1 = (int)trainb[sj*so1+so2];
+            strainsb[temp1 +  ((int)nsub[0])*counters[temp1]] = trainb[sj*so1];
+            counters[temp1]++;
+        }
+        moff[0] = 1;
+        moff[1] = lena+1;
+        for(i=2;i<nsub[0]+2;i++){
+            moff[i] = moff[i-1]*(counters[i-2]+1);
+        }
+
+        /* initialize array */
+
+        /* now enter the loop over q,k */
+        for(i=0;i<msz0;i++){
+            q = qs[i];
+            for(j=0;j<msz1;j++){
+                k = ks[j];
+                memset(m,0,sizeof(double)*pow(ntptr[1]+1,nsub[0]+1));
+                for(II=0;II<lena+1;II++){
+                    m[II] = II;
+                }
+                
+                for(II=0;II<moff[((int)nsub[0])+1];II=II+moff[1]){
+                    for(JJ=1,temp1=0;JJ<nsub[0]+1;JJ++){
+                        temp1=temp1+ (II%moff[JJ+1])/moff[JJ];
+                    }
+                    m[II] = temp1;
+                }
+
+                /* We'll be doing the algorithm in reverse, */
+                /* starting with the first spikes and moving */
+                /* forward in time. */
+
+                /* we traverse the array linearly because we can't */
+                /* write a generally deep nested for loop in C */
+                /* We could write a matlab script to write some C code and */
+                /* then compile it.  This would be amusing to no one but */
+                /* ourselves, though...*/
+
+                for(II=1;II<moff[((int)nsub[0])+1];II++){
+                    /*mexPrintf("m[%d] = %lf:\n",II,m[II]);*/
+                    if( m[II] == 0.0 ){
+                        /* set the current smallest option to the deletion */
+                        /* of a spike in traina */
+                        smallest = m[II-1] + 1;
+                        /*mexPrintf("\tDELETE A: %lf, spiketime = %lf, spikeindex = %d \n",smallest,traina[((II%moff[1])-1)*so1], ((II%moff[1])-1) );*/
+                        
+                        /* we now check all the subtrains, always keeping  */
+                        /* the smallest option in smallest */
+                        
+                        for(JJ=1;JJ<nsub[0]+1;JJ++){
+                            /*mexPrintf("\tJJ: %d\n",JJ);*/
+                            /* make sure we don't look at indices outside the matrix */
+                            if( ((II % moff[JJ+1])/moff[JJ]) != 0 ){
+                                /* option one is deleting a spike from trainb */
+                                option1 = m[II-moff[JJ]] + 1.0;
+                                /*mexPrintf("\tDELETE B%d: %lf\n",JJ,option1);*/
+                                /* option two is matching spikes between a & b */
+                                option2 = m[II-moff[JJ]-1] +
+                                    q*dabs( traina[((II%moff[1])-1)*so1] - strainsb[JJ-1 + (II%moff[JJ+1])/moff[JJ] -1] ) +
+                                    k*(1-dd(traina[((II%moff[1])-1)*so1+so2],(double)(JJ-1)));
+                                /*mexPrintf("\tMERGE B%d: %lf\n",JJ,option2);*/
+                                smallest = min(min(option1,option2),smallest);
+                                /*mexPrintf("\t\tSmallest: %lf",smallest);*/
+                                /*mexPrintf("\n");*/
+                            }
+                        m[II] = smallest;
+                        }
+                    }
+                }
+                /*mexPrintf("%d,%d,%d,%d\n",i,j,r,s);
+                mexPrintf("%d + %d*%d + %d*%d + %d*%d = %d\n",i,j,o1,r,o2,s,o3,i+o1*j+o2*r+o3*s);*/
+                ms[i+o1*j+o2*s+o3*r]=ms[i+o1*j+o2*r+o3*s] = m[II-1];
+                
+            }
+            
+        }                               
+    }
+    }
+    free(m);
+    free(strainsb);
+    free(counters);
+    
+}

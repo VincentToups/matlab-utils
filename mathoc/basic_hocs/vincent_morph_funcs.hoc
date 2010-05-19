@@ -1,0 +1,126 @@
+// This buffer is for notes you don't want to save, and for Lisp evaluation.
+// If you want to create a file, visit that file with C-x C-f,
+// then enter the text in that file's own buffer.
+
+
+//if you have a list of sections
+//
+//objref sections
+//sections = SectionRef[n]
+//
+//then to access one of the sections you type:
+//
+//objref asec
+//asec = sections[0]
+//access asec.sec()
+//
+//OR
+//
+//we can say
+//
+//access sections[0].sec()
+
+// Proceed to access stuff
+
+
+//
+//print "%%%somas"
+//forsec somas psection()
+
+objref ofile
+proc write_morphology(){
+    objref ofile
+    ofile = new File()
+    ofile.wopen($s1)
+	access soma
+	distance()
+    forall {
+        ind = findsec(secname())
+        ofile.printf("%s %d %d %0.6f %0.6f %f\n",secname(),ind,L,diam,PI*L*diam, distance(.5))
+    }
+    ofile.close()
+}
+
+proc write_morph_map(){ 
+    objref ofile
+    ofile = new File()
+    ofile.wopen($s1)
+    
+    ofile.printf("somas")
+    forsec somas {
+        ofile.printf(" %d",findsec(secname()))
+    }
+    ofile.printf("\n")
+    ofile.printf("axons")
+    forsec axons {
+        ofile.printf(" %d",findsec(secname()))
+    }
+    ofile.printf("\n")
+    ofile.printf("dendrites")
+    forsec dendrites {
+        ofile.printf(" %d",findsec(secname()))
+    }
+    ofile.printf("\n")
+    ofile.printf("ptrunk")
+    forsec ptrunk {
+        ofile.printf(" %d",findsec(secname()))
+    }
+    ofile.printf("\n")
+    ofile.printf("strunk")
+    forsec strunk {
+        ofile.printf(" %d",findsec(secname()))
+    }
+    ofile.printf("\n")
+    ofile.printf("trunk")
+    forsec trunk {
+        ofile.printf(" %d",findsec(secname()))
+    }
+    ofile.printf("\n")
+    ofile.printf("basal")
+    forsec basal {
+        ofile.printf(" %d",findsec(secname()))
+    }
+    ofile.printf("\n")
+    ofile.printf("trunkbasal")
+    forsec trunkbasal {
+        ofile.printf(" %d",findsec(secname()))
+    }
+    ofile.printf("\n")
+    ofile.printf("aptuft")
+    forsec aptuft {
+        ofile.printf(" %d",findsec(secname()))
+    }
+    ofile.printf("\n")
+    ofile.printf("tuft")
+    forsec tuft {
+        ofile.printf(" %d",findsec(secname()))
+    }
+    ofile.printf("\n")
+    ofile.printf("perisomatic")
+    forsec perisomatic {
+        ofile.printf(" %d",findsec(secname()))
+    }
+    ofile.printf("\n")
+    ofile.close()
+}
+//
+//print "%%%axons"
+//forsec axons psection()
+//print "%%%dendrites"
+//forsec dendrites psection()
+//print "%%%ptrunk"
+//forsec ptrunk psection()
+//print "%%%strunk"
+//forsec strunk psection()
+//print "%%%trunk"
+//forsec trunk psection()
+//print "%%%basal"
+//forsec basal psection()
+//print "%%%trunkbasal"
+//forsec trunkbasal psection()
+//print "%%%aptuft"
+//forsec aptuft psection()
+//print "%%%tuft"
+//forsec tuft psection()
+//print "%%%perisomatic"
+//forsec perisomatic psection()

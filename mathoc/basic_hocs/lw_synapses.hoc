@@ -1,0 +1,132 @@
+objref __lw_synapses 
+__lw_synapses = new List()
+
+begintemplate LwSynapsesPreSimmer 
+	public init, preSim
+	external __lw_synapses
+	proc init() {
+	}
+	proc preSim() { local i, n
+		n = __lw_synapses.count()
+		for(i=0;i<n;i=i+1){
+			__lw_synapses.object(i).generate()
+		}
+	}
+endtemplate LwSynapsesPreSimmer
+
+objref lwsynpresim 
+lwsynpresim = new LwSynapsesPreSimmer()
+if(name_declared("preSimList")){
+	preSimList.append(lwsynpresim)
+} else {
+	printf("*** Error - I really expected preSimList to be defined in lw_synapses.hoc")
+	1/0
+}
+
+begintemplate LwSynapses
+   public netConList, synList, smartStimList, wVec, init, load_synapses_from_file, set_generator, regenerate, id, generator, generate
+   external __lw_synapses
+   objref netConList, synList, smartStimList, wVec, this, generator, null
+   strdef name
+   strdef tmpstr1, tmpstr2, tmpstr3, section_str, execstr, syntype
+
+   proc init(/*filename,generator*/) { local narg
+	   narg = numarg()
+	   netConList = new List()
+	   synList = new List()
+	   smartStimList = new List()
+	   wVec = new Vector()
+	   
+	   if(narg == 1) {
+		   this.load_synapses_from_file($s1)
+	   } else if(narg == 2) {
+		   this.load_synapses_from_file($s1)
+		   generator = $o2
+	   }
+	   id = __lw_synapses.count()
+	   __lw_synapses.append(this)
+	   
+   }
+   
+   proc set_generator(){
+	   generator = $o1
+   }
+
+   proc generate( ) {
+	   if(generator==null){
+		   printf("Warning, %s (%s) asked to generate with no generator.",this,name)
+	   } else {
+		   generator.generate(smartStimList)
+	   }
+   }
+   
+   proc load_synapses_from_file(/*filename*/) { local i, j, nsyn, m, loc, tau, tau1, tau2, e, w  localobj fpr, str, tempobj, push
+	   fpr = new File($s1)
+	   fpr.ropen()
+	   fpr.scanstr(syntype)
+	   nsyn = fpr.scanvar()
+	   synList.remove_all()
+	   smartStimList.remove_all()
+	   wVec.resize(0)
+	   netConList.remove_all()
+	   
+	   push = new SectionRef()
+	   
+	   if (!strcmp(syntype,"ExpSyn")) {
+		   //print "Expsyn, bros"
+		   for(i=0;i<nsyn;i=i+1){
+			   fpr.scanstr(section_str)
+			   sprint(execstr,"~access %s\n",section_str)
+			   loc = fpr.scanvar()
+			   tau = fpr.scanvar()
+			   e = fpr.scanvar()
+			   w = fpr.scanvar()
+			   //push_section(section_str)
+			   execute(execstr)
+			   tmpstr1 = secname()
+			   //printf("Accessed %s via %s\n",tmpstr1,section_str)
+			   tempobj = new ExpSyn(loc)
+			   tempobj.tau = tau
+			   tempobj.e = e
+			   synList.append(tempobj)
+			   wVec.append(w)
+			   tempobj = new SmartStim()
+			   tempobj.ntimes = 0
+			   smartStimList.append(tempobj)
+			   tempobj = new NetCon(tempobj,synList.object(synList.count()-1))
+			   tempobj.weight = w
+			   netConList.append(tempobj)
+		   }
+	   } else if (!strcmp(syntype,"Exp2Syn")) {
+		      for(i=0;i<nsyn;i=i+1){
+			   fpr.scanstr(section_str)
+			   sprint(execstr,"~access %s\n",section_str)
+			   loc = fpr.scanvar()
+			   tau1 = fpr.scanvar()
+			   tau2 = fpr.scanvar()
+			   e = fpr.scanvar()
+			   w = fpr.scanvar()
+			   //push_section(section_str)
+			   execute(execstr)
+			   tmpstr1 = secname()
+			   //printf("Accessed %s via %s\n",tmpstr1,section_str)
+			   tempobj = new Exp2Syn(loc)
+			   tempobj.tau1 = tau1
+			   tempobj.tau2 = tau2
+			   tempobj.e = e
+			   synList.append(tempobj)
+			   wVec.append(w)
+			   tempobj = new SmartStim()
+			   tempobj.ntimes = 0
+			   smartStimList.append(tempobj)
+			   tempobj = new NetCon(tempobj,synList.object(synList.count()-1))
+			   tempobj.weight = w
+			   netConList.append(tempobj)
+		   }
+	   } else {
+		   print "Didn't recognize synapse type"
+		   1/0
+	   }
+	   access push.sec()
+   }
+endtemplate LwSynapses

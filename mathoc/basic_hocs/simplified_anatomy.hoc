@@ -1,0 +1,141 @@
+create soma, apical, basilar1, basilar2, basilar3, axon
+connect apical(0), soma(1)
+connect basilar1(0), soma(0)
+connect basilar2(0), soma(0)
+connect basilar3(0), soma(0)
+connect axon(0), soma(0)
+
+objref sections
+sections = new List()
+
+
+/*
+(after-this-line
+  (let ((names '( "soma" "apical" "basilar1" "basilar2" "basilar3" "axon")))
+    (loop for name in names do
+(insert (format "access %s\nobjref %sref\n%sref = new SectionRef()\nsections.append(%sref)\n" name name name name)))))*/
+
+access soma
+objref somaref
+somaref = new SectionRef()
+sections.append(somaref)
+access apical
+objref apicalref
+apicalref = new SectionRef()
+sections.append(apicalref)
+access basilar1
+objref basilar1ref
+basilar1ref = new SectionRef()
+sections.append(basilar1ref)
+access basilar2
+objref basilar2ref
+basilar2ref = new SectionRef()
+sections.append(basilar2ref)
+access basilar3
+objref basilar3ref
+basilar3ref = new SectionRef()
+sections.append(basilar3ref)
+access axon
+objref axonref
+axonref = new SectionRef()
+sections.append(axonref)
+
+objref somas
+somas = new List()
+somas.append(somaref)
+objref basilars
+basilars = new List()
+basilars.append(basilar1ref)
+basilars.append(basilar2ref)
+basilars.append(basilar3ref)
+objref apicals 
+apicals  = new List()
+apicals.append(apicalref)
+objref soma_and_basilars
+soma_and_basilars  = new List()
+soma_and_basilars.append(basilar1ref)
+soma_and_basilars.append(basilar2ref)
+soma_and_basilars.append(basilar3ref)
+soma_and_basilars.append(somaref)
+
+soma {
+	L = 30
+	diam = 30
+	nseg = 10
+}
+
+apical {
+	L = 300
+	diam = 1
+	nseg = 23
+}
+
+basilar1 {
+	L = 100
+	diam = 2
+	nseg = 5
+}
+
+basilar2 {
+	L = 100
+	diam = 2
+	nseg = 5
+}
+
+basilar3 {
+	L = 100
+	diam = 2
+	nseg = 5
+}
+
+axon {
+	L = 1000
+	diam =  1
+	nseg = 37
+}
+
+// Biophys
+
+forall {
+	Ra = 100
+	cm = 1
+}
+
+soma {
+	insert hh
+}
+
+apical {
+	insert pas
+	g_pas = 0.0002
+	e_pas = -65
+}
+
+basilar1 {
+	insert pas
+	g_pas = 0.0002
+	e_pas = -65
+}
+
+basilar2 {
+	insert pas
+	g_pas = 0.0002
+	e_pas = -65
+}
+
+basilar3 {
+	insert pas
+	g_pas = 0.0002
+	e_pas = -65
+}
+
+axon {
+	insert hh
+}
+
+access soma
+
+
+
+
+

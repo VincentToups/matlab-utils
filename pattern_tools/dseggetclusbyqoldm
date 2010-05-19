@@ -1,0 +1,51 @@
+function [cluss,fits,inds] = dseggetclusbyq(dseg,q)
+% CLUSTERINGS = DSEGGETCLUSBYQ(DSEG,Q) returns all the clusterings in DSEG
+% for the value q.  If Q is a vector of length 2, all clusterings between
+% this range are returned.
+%
+% [CLUS,FITS,INDS] = DSSEGGETCLUSBYQ(DSEG,Q) also returns the fitnesses for
+% the returned clusterings and the indices in terms of q,k,n (and r) which 
+% produced them.
+
+if dseg.status < 1
+    error('Segment needs to be clustered.');
+end
+
+tc = dseg.tcluss;
+if length(q)==1
+    qind = find(dseg.q==q);
+    if isempty(qind)
+        [nothing, qind] = min(abs(dseg.q-q));
+    end
+    cluss = {};
+    fits = [];
+    inds = [];
+    for i=1:length(tc)
+        tinds = [tc(i).inds{:};];
+        tinds = reshape(tinds,[4 length(tinds)/4])';
+        qi = tinds(:,1);
+        ii = find(qi==qind);
+        inds = [inds; tinds ];
+        cluss = [cluss {tc(i).u{ii}}];
+        fits = [fits tc(i).fits(ii)];
+    end
+    return 
+else
+    q = sort(q);
+    qind = find(dseg.q > q(1) & dseg.q < q(2));
+    cluss = {};
+    fits = [];
+    inds = [];
+    for i=1:length(tc)
+        tinds = [tc(i).inds{:};];
+        tinds = reshape(tinds,[4, length(tinds)/4])';
+        qi = tinds(:,1);
+        ii = find(qi>qind(1) & qi<qind(end));
+        inds = [inds; tinds];
+        cluss = [cluss {tc(i).u{ii}}];
+        fits = [fits tc(i).fits(ii)];
+    end
+    return
+end
+
+    

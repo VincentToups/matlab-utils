@@ -1,0 +1,12 @@
+objref Sections
+soma_index = 0
+proc compile_section_list() {
+    objref Sections
+    Sections = new List()
+    forall {
+        Sections.append(new SectionRef())
+		if(!strcmp(secname(),"soma")){
+			soma_index = Sections.count()-1
+		}
+    }
+}
