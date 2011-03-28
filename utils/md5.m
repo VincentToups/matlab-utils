@@ -29,7 +29,7 @@ if md5_verbose__
 end
 
 otmp = tempname;
-system(sprintf('md5 %s > %s',tmp,otmp));
+system(sprintf('md5sum %s > %s',tmp,otmp));
 f=fopen(otmp);
 line = fgetl(f);
 fclose(f);

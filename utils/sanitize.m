@@ -1,8 +1,12 @@
-function s=sanitize(input,replacements)
+function s=sanitize(input,userSupplied,replacements)
 %
 %
 
-if ~exist('replacements','var')
+if ~exist('userSupplied','var')
+  userSupplied = {};
+end
+
+if ~exist('replacements','var') 
   replacements = {...
       {'_','-'}...
       {';',''}...
@@ -12,6 +16,7 @@ if ~exist('replacements','var')
       {')','-'}};
 end
 
+replacements = [replacements userSupplied];
 
 s = foldl(@(it,ac)...
                       strrep(ac,it{:}),...

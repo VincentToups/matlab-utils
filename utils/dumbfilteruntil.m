@@ -1,9 +1,10 @@
 function s=dumbfilteruntil(s,n)
 %
 %
-
-npeaks = length(findpeaks(s));
+xmax = findpeaks(abs(s));
+npeaks = length(xmax.loc);
 while npeaks>n
   s = dumbfilter(s,2);
-  npeaks = length(findpeaks(s));
+  xmax = findpeaks(abs(s));
+  npeaks = length(xmax.loc)
 end

@@ -1,0 +1,24 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+splitStat = map(@(i)localDispersion(ds,30,i), 1:size(data,2));
+

@@ -31,9 +31,12 @@ ax_style.YTickLabelMode='manual';
 ax_style.YTickMode = 'manual';
 rast_style.width = 10;
 
-clr = repmat( [1 0 0; 0 0 1; 0 .5 0; [1 1 0]; [1 0 1]; [0 .5 1] ], [.5 0 1] );
+clr = [1 0 0; 0 0 1; 0 .5 0; [1 1 0]; [1 0 1]; [0 .5 1] ];
 
 fig_style = lax_style;
-fig_style.FontSize = 24;
+fig_style.FontSize = 18;
 fig_style.position = [ 0.2375    0.2500    0.6024    0.6024];
+
+fig_style_np = fig_style;
+fig_style_np = rmfield(fig_style_np, 'position');
 

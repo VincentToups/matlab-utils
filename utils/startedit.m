@@ -1,7 +1,7 @@
 function startedit()
 
-files = map(@strtrim,tokenize(ls('-1', '-t', '*.m'),newline));
-files = filt(@(x)~isempty(x),files);
+s = ls('-1', '-t', '*.m');
+files = map(@(x) strtrim(s(x,:)), 1:size(s,1))
 
 fprintf('Choose files to open:\n');
 for fi=1:min([length(files) 20])

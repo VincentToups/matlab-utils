@@ -40,3 +40,6 @@ fig_style = lax_style;
 fig_style.FontSize = 24;
 fig_style.Position = [ 0.2375    0.2500    0.6024    0.6024];
 
+fig_style_octave = struct;
+fig_style_octave.FontSize = 18;
+fig_style_octave.LineWidth = 2;

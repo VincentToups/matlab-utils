@@ -7,7 +7,7 @@ function vprint(string,varargin)
 % vprint_png__ is a boolean.  Will print pngs if 1.  defaults to 1
 
 
-global vprint_dest__ vprint_eps__  vprint_jpg__  vprint_fig__ vprint_trim__ vprint_png__ vprint_notify_emacs__ vprint_check_printed__
+global vprint_dest__ vprint_eps__  vprint_pdf__ vprint_jpg__  vprint_fig__ vprint_trim__ vprint_png__ vprint_notify_emacs__ vprint_check_printed__
 
 if isempty(vprint_dest__)
   vprint_dest__ = 'figures';
@@ -26,6 +26,11 @@ if isempty(vprint_png__)
   vprint_png__ = 1;
 end
 
+if isempty(vprint_pdf__)
+  vprint_pdf__ = 1;
+end
+
+
 if isempty(vprint_trim__)
   vprint_trim__ = 1;
 end
@@ -41,7 +46,7 @@ end
 state = exist(vprint_dest__);
 if state == 0 || state == 1
   mkdir(vprint_dest__);
-  dirs = {'eps','jpg','fig','png'};
+  dirs = {'eps','jpg','fig','png','pdf'};
   for di=1:length(dirs)
     dir=dirs{di};
     mkdir(vprint_dest__,dir);
@@ -75,8 +80,14 @@ if vprint_eps__
   print('-depsc','-adobecset', [vprint_dest__ '/eps/' name]);  
 end
 
+if vprint_pdf__
+  print('-dpdf',[vprint_dest__ '/pdf/' name]);  
+end
+
+
 if vprint_notify_emacs__ && vprint_png__
-  fullName = strrep([vprint_dest__ '/png/' name '.png'],'.png.png','.png');
+  fullName = dircat(pwd,strrep([vprint_dest__ '/png/' name '.png'],'.png.png','.png'));
+  fullName = fullName(1:(end-1));
   emacs_eval('(push-matlab-figure-onto-history "%s")', fullName);
 end
 

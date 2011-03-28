@@ -30,7 +30,8 @@ if length(varargin)
   else
     offset = 0;
   end
-
+  
+  
   hs = line(xs,ys+offset,'Color','k','LineWidth',2,varargin{:});
 else
   hs = line(xs,ys,'Color','k');
